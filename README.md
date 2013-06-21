@@ -1,4 +1,4 @@
-btctools
+BTCtools
 ========
 
 Beyond the consensus NGS tools
