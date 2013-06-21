@@ -2,33 +2,40 @@
 
 # use this to obtain the number of each base at each site from a bam file
 # you need to give the bam file and the reference fasta
-# it also calculate the avergae per site entropy for the sample
-# and if -window is specified calculates a sliding window of the average entropy
+# it also calculate the average per site entropy for the sample
+# 
+# produces a table with Sample\tChr\tPosition\tRefBase\tCoverage\t
+# AvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tentropy(base 2)\tsimpson\tNonRefCnt
+# CntTv\tCntTs\tCodonPos\tCntNonSyn\tCntSyn\tOrderATCG
 
 use strict;
 use Getopt::Long; 
 use Bio::DB::Sam;
 use Math::CDF;
 
-my ($bam, $ref,$help, $out,%basefreq,$i,$stub,$window,%cumulqual);
+# global variables
+my ($bam, $ref,$help, $out,%basefreq,$i,$stub,%cumulqual,$orfs);
+# addition of avqual threshold, coverage threshold, pval threshold => need to re-think this
+# my $tpval=0;
+# my $tcov=0;
+# my $tqual=0;
 
 &GetOptions(
-	    'bam:s'      => \$bam,#bam file (binary sam)
-	    'ref:s'  =>  \$ref, #reference file in fasta  
-	    'window=i'  => \$window, #window size
+	    'bam:s'  => \$bam,#bam file (binary sam)
+	    'ref:s'  => \$ref, #reference file in fasta  
+	    'orfs:s' => \$orfs, #start stop position for each gene labelled the same way as the ref file
         "stub=s" => \$stub,
            );
 
-
 if (($help)&&!($help)||!($bam)||!($ref)){
- print "Usage : perl EntropyFromSam.pl -bam S1_refHPAI_cons_stampy.bam -ref refHPAI_cons.fa -out S1_basefreq.txt \n";
- print " -bam <txt> - the input a file in bam format\n";
+ print "Usage : perl btcutils.pl -bam input.bam -ref ref.fa -out stub \n";
+ print " -bam <txt>  - the input a file in bam format\n";
  print " -ref <txt>  - the reference fasta file\n";
- print " -stub - the output in text-tab delimited\n";
- print " -window - the sliding window size\n";
+ print " -orfs <txt> - text tab-delimited file with Chr,Start,Stop of the coding region [optional: only if you want information about dN/dS and aa frequencies etc...]\n";
+ print " -stub <txt> - the output in text-tab delimited\n";
  print " -help        - Get this help\n";
  exit();
- }
+}
 
 # high level API
 my $sam = Bio::DB::Sam->new(-bam  => $bam,
@@ -144,29 +151,6 @@ foreach my $gene (keys %{$basefreq{$bam}}){
 
 # Jo's loop for the aa mutations and position of mismatches in the codon
 
-
-
-if ($window){
-	open (WINDOW, ">$stub\_$window\.txt")||die "can't open $stub\_$window\.txt\n";
-	print WINDOW "Gene\tPosition\tRaw_Average_entropy\tAverage_Entropy\n";
-	foreach my $gene (keys %{$rawshannon{$bam}}){
-	  print "$gene\n";
-	  foreach my $site (sort {$a<=>$b} keys %{$rawshannon{$bam}{$gene}}){
-		my $rawsum=0;
-		my $sum=0;
-		if ($rawshannon{$bam}{$gene}{$site+$window}){
-		  for ($i=0; $i<$window; $i++){
-			$rawsum=$rawsum+$rawshannon{$bam}{$gene}{$site+$i};
-			$sum=$sum+$shannon{$bam}{$gene}{$site+$i};
-		  }
-		  print WINDOW "$gene\t$site\t".$rawsum/$window."\t".$sum/$window."\n";
-		}
-	  }
-	
-	}
-	close(WINDOW);
-	system("Rscript PlotAvEntropyWindowPerGene.R $stub\_$window\.txt");
-}
 
 
 sub log_base {
