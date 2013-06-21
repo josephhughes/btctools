@@ -76,6 +76,10 @@ foreach my $target (@targets){
 		}else{
 		  $cumulqual{$bam}{$target}{$site}=$P;
 		}
+		# create a hash for the read information (position of mismatches and motifs upstream and downstream) => Jo's 
+		
+		# create a hash for the codon and aa information => Joseph
+		
 	  }
 	}
  }
@@ -89,6 +93,7 @@ my %rawshannon;# this calculates the shannon entropy taking into account all var
 
 my @nuc=qw/A C T G/;
 open (OUT, ">$stub\_entropy.txt")||die "can't open $stub\_entropy.txt\n";
+# add the reference base in the table
 print OUT "Sample\tChr\tPosition\tTotal\tAvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tentropy(base 2)\tsimpson\n";
 foreach my $gene (keys %{$basefreq{$bam}}){
   my $nbsites=0;
@@ -133,6 +138,13 @@ foreach my $gene (keys %{$basefreq{$bam}}){
   print "Gene $gene Average raw entropy = ".$rawsumentropy/$nbsites."\n";
   print "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
 }
+# Jo's code for output of the read and motif table
+
+
+
+# Jo's loop for the aa mutations and position of mismatches in the codon
+
+
 
 if ($window){
 	open (WINDOW, ">$stub\_$window\.txt")||die "can't open $stub\_$window\.txt\n";
