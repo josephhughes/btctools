@@ -23,28 +23,47 @@ my ($bam, $ref,$help, $out,%basefreq,$i,$stub,%cumulqual,$orfs);
 &GetOptions(
 	    'bam:s'  => \$bam,#bam file (binary sam)
 	    'ref:s'  => \$ref, #reference file in fasta  
-	    'orfs:s' => \$orfs, #start stop position for each gene labelled the same way as the ref file
-        "stub=s" => \$stub,
+	    'orfs:s' => \$orfs, #start stop position for each gene labelled the same way as the ref file, keep in mind that a gene may code for multiple proteins
+        "stub:s" => \$stub,
            );
 
 if (($help)&&!($help)||!($bam)||!($ref)){
  print "Usage : perl btcutils.pl -bam input.bam -ref ref.fa -out stub \n";
  print " -bam <txt>  - the input a file in bam format\n";
  print " -ref <txt>  - the reference fasta file\n";
- print " -orfs <txt> - text tab-delimited file with Chr,Start,Stop of the coding region [optional: only if you want information about dN/dS and aa frequencies etc...]\n";
+ print " -orfs <txt> - text tab-delimited file with Protein,Beginning,End,Reference(Chr) of the coding sequence [optional: only if you want information about dN/dS and aa frequencies etc...]\n";
  print " -stub <txt> - the output in text-tab delimited\n";
  print " -help        - Get this help\n";
  exit();
 }
-
-# high level API
+my %codreg;
+if ($orfs){
+    open (CODING,"<$orfs")||die "Can't open $orfs\n";
+	my $firstLine = <CODING>; 
+	if ($firstLine !~/Protein\tBeg\tEnd\tReference/){
+	  die "Error: The input file $orfs does not have the proper HEADER:\nProtein	Beg	End	Reference\n";
+	}else{
+	  while(<CODING>){
+		chomp($_);
+		my @elements=split(/\t/,$_);
+		$codreg{$elements[3]}{$elements[0]}{"Beg"}=$elements[1];
+		$codreg{$elements[3]}{$elements[0]}{"End"}=$elements[2];
+	  }
+	}
+}
+	# high level API
 my $sam = Bio::DB::Sam->new(-bam  => $bam,
 							 -fasta=> $ref);
 my $ins_cnt=0;
 my $nocigs_cnt=0;
 
 my @targets    = $sam->seq_ids;
-print "@targets\n";
+foreach my $target (@targets){
+  if (!keys %{$codreg{$target}}){
+    my @orfIDs=keys %codreg;
+	die "Error: The reference identifer $target in the bam file does not match the reference identifier in your $orfs:\n @orfIDs\n";
+  }
+}
 foreach my $target (@targets){
   print "$target\n";
   my @alignments = $sam->get_features_by_location(-seq_id => $target);
