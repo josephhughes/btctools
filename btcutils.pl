@@ -14,11 +14,12 @@ use Bio::DB::Sam;
 use Math::CDF;
 
 # global variables
-my ($bam, $ref,$help, $out,%basefreq,$i,$stub,%cumulqual,$orfs);
+my ($bam, $ref,$help, $out,%basefreq,$i,%cumulqual,$orfs,%readinfo);
 # addition of avqual threshold, coverage threshold, pval threshold => need to re-think this
 # my $tpval=0;
 # my $tcov=0;
 # my $tqual=0;
+my $stub="output";
 
 &GetOptions(
 	    'bam:s'  => \$bam,#bam file (binary sam)
@@ -51,7 +52,10 @@ if ($orfs){
 	  }
 	}
 }
-	# high level API
+# open an output file with the motif upstream and downstream of a mismatch
+open(MOTIF,">$stub\_motif.fa")||die "Can't open output $stub\_motif.fa\n";
+
+# high level API
 my $sam = Bio::DB::Sam->new(-bam  => $bam,
 							 -fasta=> $ref);
 my $ins_cnt=0;
@@ -67,10 +71,13 @@ foreach my $target (@targets){
 foreach my $target (@targets){
   print "$target\n";
   my @alignments = $sam->get_features_by_location(-seq_id => $target);
+  my $refobj = $sam->segment(-seq_id => $target);
+  my $refseq = $refobj->dna;
   for my $a (@alignments) {
 	# where does the alignment start in the reference sequence
 	my $seqid  = $a->seq_id;
-	my $start  = $a->start;
+	my $name   = $a->display_name;
+	my $start  = $a->start; #position in the reference
 	my $end    = $a->end;
 	my $strand = $a->strand;
 	my $cigar  = $a->cigar_str;
@@ -84,14 +91,17 @@ foreach my $target (@targets){
 	my $match_qual= $a->qual;       # quality of the match
 
 	#print "Ref $start Cigar $cigar $ref_dna $query_dna\n";
-	if ($cigar=~/I/){
+	if ($cigar=~/I|D|N|S|H|P|X/){
 	  $ins_cnt++;
 	}
 	if ($cigar!~/I|D|N|S|H|P|X/){#|= if there is an = it means exact match so want to parse
 	  #print "$cigar\n";
 	  $nocigs_cnt++;
 	  my @bases=split(//,$query_dna);
+	  my @refbases=split(//,$ref_dna);
 	  my $cumP=0;
+	  my $matches=0;
+	  my $mismatches=0;
 	  for ($i=0; $i<scalar(@bases); $i++){
 		# chromosome site nuc 
 		my $site=$i+$start;
@@ -102,10 +112,54 @@ foreach my $target (@targets){
 		}else{
 		  $cumulqual{$bam}{$target}{$site}=$P;
 		}
-		# create a hash for the read information (position of mismatches and motifs upstream and downstream) => Jo's 
+		# create a hash for the read information (position of mismatches and motifs upstream and downstream)
+		if ($refbases[$i]=~/$bases[$i]/i){
+		  $matches++;
+		}elsif ($refbases[$i]!~/$bases[$i]/i){ 
+		  my $readpos=$i+1;
+		  $mismatches++;
+		  $readinfo{$name}{$mismatches}=$readpos;
+		  my ($motif_start,$motif_end,$endfromref,$startfromref);
+		  if (length($query_dna)<=($i+10)){
+		    $motif_end=length($query_dna);
+		    $endfromref=$i+10+1-length($query_dna);
+		  }elsif (length($query_dna)>($i+10)){
+		    $motif_end=$i+10;
+		  }
+		  if ($i-10<0){
+		    $motif_start=0;
+		    $startfromref=10-$i;
+		  }elsif($i-10>=0){
+		    $motif_start=$i-10;
+		  }
+		  
+		  if ($start-1+$i-10>=0 && length($refseq)>=$i+10){
+			  my $motif = substr ($query_dna,$motif_start,$motif_end+1-$motif_start);
+			  my $begmotif = lc(substr ($refseq,($start-1+$i-10),$startfromref));
+			  my $endmotif = lc(substr ($refseq,(($start-1+$i-10+21)-$endfromref),$endfromref));
+			  $motif = $begmotif.$motif.$endmotif;
+			  # print "Motif $begmotif$motif$endmotif\n";
+			  my $refmotif = substr ($refseq,($start-1+$i-10),21);
+			  # print "Refer $refmotif\n\n";
+			  if (length($motif)<21){
+			    print "Motifend $motif_end EndFromRef $endfromref\t StartMotif $motif_start StartFromRef $startfromref\tlength ".length($query_dna)." position $i Length of reference ".length($refseq)." site $site\n";
+			  }elsif (length($motif)==21){
+			    print MOTIF ">$name\_$mismatches\n$motif\n";
+			  }
+		  }
+		}
+		$readinfo{$name}{"mismatches"}=$mismatches;
+		$readinfo{$name}{"matches"}=$matches;
+		$readinfo{$name}{"total"}=$mismatches+$matches;
+		$readinfo{$name}{"freqmis"}=$mismatches/($mismatches+$matches);
+		# motif on either side of mismatch
 		
-		# create a hash for the codon and aa information => Joseph
 		
+		
+		# create a hash for the codon and aa information 
+		if ($orfs){
+		  
+		}
 	  }
 	}
  }
