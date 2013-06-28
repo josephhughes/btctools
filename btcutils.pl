@@ -50,47 +50,47 @@ my $Ncnt=0;
 my %codreg;
 if ($orfs){
     open (CODING,"<$orfs")||die "Can't open $orfs\n";
-	my $firstLine = <CODING>; 
-	if ($firstLine !~/Protein\tBeg\tEnd\tReference/){
-	  die "Error: The input file $orfs does not have the proper HEADER:\nProtein	Beg	End	Reference\n";
-	}else{
-	  while(<CODING>){
-		chomp($_);
-		my @elements=split(/\t/,$_);
-		$codreg{$elements[3]}{$elements[0]}{"Beg"}=$elements[1];#$codreg{Chr name}{ProteinName}{"Beg"}
-		$codreg{$elements[3]}{$elements[0]}{"End"}=$elements[2];
-	  }
-	}
-	#load translation table if start and stop specified
-	# IUPAC
-	# W	weak	A			T	
-	# S	strong		C	G	
-	# M	amino	A	C		
-	# K	keto			G	T
-	# R	purine	A		G	
-	# Y	pyrimidine		C		T
-	# B	not A (B comes after A)		C	G	T	
-	# D	not C (D comes after C)	A		G	T
-	# H	not G (H comes after G)	A	C		T
-	# V	not T (V comes after T and U)	A	C	G	
-	# N or -	any base (not a gap)	A	C	G	T	
-	$IUPAC{"W"} = "T A";
-	$IUPAC{"S"} = "C G";
-	$IUPAC{"M"} = "A C";
-	$IUPAC{"K"} = "G T";
-	$IUPAC{"R"} = "A G";
-	$IUPAC{"Y"} = "C T";
-	$IUPAC{"B"} = "C G T";
-	$IUPAC{"D"} = "A G T";
-	$IUPAC{"H"} = "A C T";
-	$IUPAC{"V"} = "A C G";
-	$IUPAC{"N"} = "A C G T";
-	# Ambiguous Amino Acids	3-Letter	1-Letter
-	# Asparagine or aspartic acid	Asx	B
-	# Glutamine or glutamic acid	Glx	Z
-	# Leucine or Isoleucine	Xle	J
-	# Unspecified or unknown amino acid	Xaa	X
-	#--------------------------#
+    my $firstLine = <CODING>; 
+    if ($firstLine !~/Protein\tBeg\tEnd\tReference/){
+      die "Error: The input file $orfs does not have the proper HEADER:\nProtein	Beg	End	Reference\n";
+    }else{
+      while(<CODING>){
+	chomp($_);
+	my @elements=split(/\t/,$_);
+	$codreg{$elements[3]}{$elements[0]}{"Beg"}=$elements[1];#$codreg{Chr name}{ProteinName}{"Beg"}
+	$codreg{$elements[3]}{$elements[0]}{"End"}=$elements[2];
+      }
+    }
+    #load translation table if start and stop specified
+    # IUPAC
+    # W	weak	A			T	
+    # S	strong		C	G	
+    # M	amino	A	C		
+    # K	keto			G	T
+    # R	purine	A		G	
+    # Y	pyrimidine		C		T
+    # B	not A (B comes after A)		C	G	T	
+    # D	not C (D comes after C)	A		G	T
+    # H	not G (H comes after G)	A	C		T
+    # V	not T (V comes after T and U)	A	C	G	
+    # N or -	any base (not a gap)	A	C	G	T	
+    $IUPAC{"W"} = "T A";
+    $IUPAC{"S"} = "C G";
+    $IUPAC{"M"} = "A C";
+    $IUPAC{"K"} = "G T";
+    $IUPAC{"R"} = "A G";
+    $IUPAC{"Y"} = "C T";
+    $IUPAC{"B"} = "C G T";
+    $IUPAC{"D"} = "A G T";
+    $IUPAC{"H"} = "A C T";
+    $IUPAC{"V"} = "A C G";
+    $IUPAC{"N"} = "A C G T";
+    # Ambiguous Amino Acids	3-Letter	1-Letter
+    # Asparagine or aspartic acid	Asx	B
+    # Glutamine or glutamic acid	Glx	Z
+    # Leucine or Isoleucine	Xle	J
+    # Unspecified or unknown amino acid	Xaa	X
+    #--------------------------#
     $c2p{$_} = "Z" for qw(SAA);
     $c2p{$_} = "J" for qw(MTT MTA);
     $c2p{$_} = "B" for qw(AAT AAC GAC GAT RAT RAC);
