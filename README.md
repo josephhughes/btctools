@@ -1,60 +1,68 @@
-BTCtools
-========
-
-Beyond the consensus NGS tools
-==============================
-
-
+BTCtools - Beyond the consensus NGS tools
+========================================
 
 Single SAM
 ----------
-* Sequencing error estimates
 
-dN/dS (need aa loop)
+Input: 
 
-* entropy
+* A single bam file
 
-* Per site entropy 
+* A reference in FASTA format
 
-Per site dN/dS (aa loop)
+* A text-tab delimited file with coding regions [optional]
 
-* Minimum frequency threshold table
+Output:
 
-* GC content (add reference base in table)
+STDOUT (or logfile):
 
-Number of synonymous and non-syn changes of individual genes (need  aa loop)
+* Entropy per gene
 
-Motif upstream of mutation (read loop, need to provide a fasta file for weblogo) this would mainly be useful for clonal NGS data, low frequency samples, for looking at sequencing error
+* Number of synonymous and non-syn changes of individual genes
 
-Introduced stop codons (aa loop)
+* Number of reads with 1, 2 ,3 mismatches
 
-Read mismatch location (read loop : position of mismathces in each of the reads, get information about how many reads have 1, 2, 3 etcc mutations): Read position, number of mismatches, nb of reference bases, total number of bases, mismatch frequency
+Four files:
+  1. A nucleotide base frequency table with:
+  
+    * Sequencing error estimates
+    
+    * Per site entropy 
+    
+  2. An amino-acid table with:
+    *  dN/dS
+    
+    * stop codons
+    
+  3. A FASTA file with the sequence around the mismatches:
+    * Motif upstream of mutation this would mainly be useful for clonal NGS data, low frequency samples, for looking at sequencing error
 
-vPhaser - haplotype diversity 
+  4. Position of mismatches in a read
+    * Read mismatch location (position of mismathces in each of the reads): Read position, number of mismatches, nb of reference bases, total number of bases, mismatch frequency
 
-Figures and tables from single SAM:
--------------------------
-1) Sequence error estimates => Mutation spectrum = plot distribution of frequency estimates (figure)
+Use table 1 to calculate and plot:
 
-2) dN/dS => single value per gene (table)
+  1. Sequence error estimates => Mutation spectrum = plot distribution of frequency estimates (figure)
 
-3) entropy => single value per gene (table)
+  2. GC content versus coverage plot(add reference base in table)
 
-4) Per site entropy => plot entropy along each gene and plot sliding window of entropy (figure)
+  3. Per site entropy => plot entropy along each gene and plot sliding window of entropy (figure)
+  
+  4. Per site coverage
 
-5) Per aa site dN/dS => plot dN/dS along the length of each gene (figure)
+Use table 2:
 
-6) Motif => web-logo plot  (figure)
+  1. Per aa site dN/dS => plot dN/dS along the length of each gene (figure)
+  
+Use file 3:
 
-7) Mismatch location plot from first base (figure)
+  1. Motif => web-logo plot  (figure)
+  
+use table 4:
 
-8) mutations per codon position (table and figure)
+  1. Mismatch location plot from first base (figure)
 
-9) gc versus coverage plot (figure)
-
-10) mutation frequency per site coloured by coverage
-
-11) per site coverage
+  2. mutations per codon position (table and figure)
 
 
 Comparison between two SAM
