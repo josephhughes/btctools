@@ -14,7 +14,7 @@ use Bio::DB::Sam;
 use Math::CDF;
 
 # global variables
-my ($bam, $ref,$help, $out,%basefreq,$i,%cumulqual,$orfs,%readinfo,%IUPAC,%c2p,%aafreq);
+my ($bam, $ref,$help, $out,%basefreq,%refbase,$i,%cumulqual,$orfs,%readinfo,%IUPAC,%c2p,%aafreq,%aaorder);
 # addition of avqual threshold, coverage threshold, pval threshold => need to re-think this
 # my $tpval=0;
 # my $tcov=0;
@@ -167,6 +167,7 @@ foreach my $target (@targets){
 		my $site=$i+$start;
 		my $readpos=$i+1;
 		$basefreq{$bam}{$target}{$site}{$bases[$i]}++;
+		$refbase{$bam}{$target}{$site}=$refbases[$i];
 		my $P = 10**(-$scores[$i]/10);
 		if ($cumulqual{$bam}{$target}{$site}){
 		  $cumulqual{$bam}{$target}{$site}=$cumulqual{$bam}{$target}{$site}+$P;
@@ -215,7 +216,7 @@ foreach my $target (@targets){
 		if ($orfs){
 		  #$codreg{Chr name}{ProteinName}{"Beg"}
 		  foreach my $prot (keys %{$codreg{$target}}){
-		    my $noUTR=$site-$codreg{$target}{$prot}{"Beg"}+1;
+		    my $noUTR=($site-$codreg{$target}{$prot}{"Beg"})+1;
 		    my ($aasite,$mod);
 		    if ($noUTR==1){
               $mod=1;
@@ -223,7 +224,7 @@ foreach my $target (@targets){
               $mod = $noUTR % 3;
             }
             # check that the site is in a coding region, that it is the first codon position of the coding region and that the read is long enough for final codon
-            if ($site>=$codreg{$target}{$prot}{"Beg"} && $site<=$codreg{$target}{$prot}{"End"} && $mod==1 && $i<(scalar(@bases)-1)){
+            if ($site>=$codreg{$target}{$prot}{"Beg"} && $site<=$codreg{$target}{$prot}{"End"} && $mod==1 && $i<(scalar(@bases)-2)){
               #print "Coding region for $prot Site $site and Modular $mod\t";
               my $rcodon=$refbases[$i].$refbases[$i+1].$refbases[$i+2];
               my $qcodon=$bases[$i].$bases[$i+1].$bases[$i+2];
@@ -241,24 +242,26 @@ foreach my $target (@targets){
               # the position of the mutation
               # Sample\tChr\tAAPosition\tRefAA\tRefCodon\tCntNonSyn\tCntSyn\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tAAcoverage\tNbStop
               $aafreq{$bam}{$target}{$prot}{$aasite}{"AAcoverage"}++;#this will provide the coverage
-              $aafreq{$bam}{$target}{$prot}{$aasite}{$qaa}++;
+              $aaorder{$bam}{$target}{$prot}{$aasite}{$qaa}++;
               $aafreq{$bam}{$target}{$prot}{$aasite}{"RefAA"}=$raa;
               $aafreq{$bam}{$target}{$prot}{$aasite}{"RefCodon"}=$rcodon;
               $aafreq{$bam}{$target}{$prot}{$aasite}{"RefSite"}=$site;
               my $aamut=$raa.$aasite.$qaa;
-              if (uc($rcodon)!=uc($qcodon)){
-				if(uc($raa)==uc($qaa)){
-				   	$aafreq{$bam}{$target}{$prot}{$aasite}{"syn"}++;
-				}elsif(uc($raa)!=uc($qaa)){
-					$aafreq{$bam}{$target}{$prot}{$aasite}{"nonsyn"}++;
+              if (uc($rcodon) ne uc($qcodon)){
+				if(uc($raa) eq uc($qaa)){
+				    my $mm=mismatch_count($rcodon,$qcodon);
+				   	$aafreq{$bam}{$target}{$prot}{$aasite}{"syn"}+=$mm;
+				}if(uc($raa) ne uc($qaa)){
+				    my $mm=mismatch_count($rcodon,$qcodon);
+					$aafreq{$bam}{$target}{$prot}{$aasite}{"nonsyn"}+=$mm;
 				}if(uc($qaa)=~/\*/){
 				    $aafreq{$bam}{$target}{$prot}{$aasite}{"stop"}++;
-				}if($refbases[$i]!=$bases[$i]){
+				}if($refbases[$i] ne $bases[$i]){
 				    $aafreq{$bam}{$target}{$prot}{$aasite}{"firstcodonpos"}++;
-				}if($refbases[$i+1]!=$bases[$i+1]){
+				}if($refbases[$i+1] ne $bases[$i+1]){
 				    $aafreq{$bam}{$target}{$prot}{$aasite}{"secondcodonpos"}++;
-			    }if($refbases[$i+2]!=$bases[$i+2]){
-			      $aafreq{$bam}{$target}{$prot}{$aasite}{"thirdcodonpos"}++;
+			    }if($refbases[$i+2] ne $bases[$i+2]){
+			       $aafreq{$bam}{$target}{$prot}{$aasite}{"thirdcodonpos"}++;
 				}
               }
             }
@@ -292,19 +295,19 @@ foreach my $gene (keys %{$basefreq{$bam}}){
 	if ($basefreq{$bam}{$gene}{$site}{"T"}){ $cntT = $basefreq{$bam}{$gene}{$site}{"T"}}else{$cntT=0}
 	if ($basefreq{$bam}{$gene}{$site}{"G"}){ $cntG = $basefreq{$bam}{$gene}{$site}{"G"}}else{$cntG=0}
 	
-	my $total = $cntA + $cntT + $cntC + $cntG;
-	my $average_p=$cumulqual{$bam}{$gene}{$site}/$total;
+	my $coverage = $cntA + $cntT + $cntC + $cntG;
+	my $average_p=$cumulqual{$bam}{$gene}{$site}/$coverage;
 	my $p = $average_p/3;
 	my %prob;
-    $prob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $total, $p));# need to double check with Richard about the -1
-    $prob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $total, $p));
-    $prob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $total, $p));
-    $prob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $total, $p));
+    $prob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $coverage, $p));# need to double check with Richard about the -1
+    $prob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $coverage, $p));
+    $prob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $coverage, $p));
+    $prob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $coverage, $p));
  	
-	if ($total>0){
+	if ($coverage>0){
 	  foreach my $nuc (keys %{$basefreq{$bam}{$gene}{$site}}){
 		my $nucnt=$basefreq{$bam}{$gene}{$site}{$nuc};
-		my $p = $nucnt / $total;
+		my $p = $nucnt / $coverage;
 		if($nucnt > 0){
 		  $shannon{$bam}{$gene}{$site} += -$p*log($p);#natural log, i.e. log base e
 		}
@@ -312,19 +315,97 @@ foreach my $gene (keys %{$basefreq{$bam}}){
 	}   
 	$nbsites++;
 	$sumentropy=$sumentropy+$shannon{$bam}{$gene}{$site};
-	print OUT "$bam\t$gene\t$site\t$total\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
-	print OUT "$shannon{$bam}{$gene}{$site}\n";
+	my $refbase=$refbase{$bam}{$gene}{$site};
+	my $nonrefcnt=$coverage-($basefreq{$bam}{$gene}{$site}{$refbase});
+	my ($Ts,$Tv) = cntTsTv($refbase,$cntA,$cntT,$cntG,$cntC);
+    my $NucOrder="";
+    foreach my $nuc (sort { $basefreq{$bam}{$gene}{$site}{$b} <=> $basefreq{$bam}{$gene}{$site}{$a} } keys %{$basefreq{$bam}{$gene}{$site}}) {
+        $NucOrder=$NucOrder.$nuc;
+    }
+    #print "$site $refbase $NucOrder\n";	 
+	print OUT "$bam\t$gene\t$site\t$refbase\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
+	print OUT "$shannon{$bam}{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\n";
   }
   print "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
 }
 # Read mismatch table:
 # ReadPos\tCntNonRef\tCntRef\tTotalCnt\tFreq\tAvQual (Freq=NonRef/TotalCnt)
+open (READ, ">$stub\_read.txt")||die "can't open $stub\_read.txt\n";
+print READ "ReadPos\tCntRef\tCntNonRef\tTotalCnt\tFreq\tAvQual\tAvQualRef\tAvQualNonRef\n";
+foreach my $readpos (sort {$a<=>$b} keys %readinfo){
+  print READ "$readpos\t".$readinfo{$readpos}{"CntRef"}."\t".$readinfo{$readpos}{"CntNonRef"}."\t";
+  my $total = $readinfo{$readpos}{"CntNonRef"}+$readinfo{$readpos}{"CntRef"};
+  my $freq = $readinfo{$readpos}{"CntNonRef"}/$total;
+  print READ "$total\t$freq\t";
+  print READ $readinfo{$readpos}{"AvQual"}/$total."\t";
+  print READ $readinfo{$readpos}{"AvQualRef"}/$readinfo{$readpos}{"CntRef"}."\t";
+  print READ $readinfo{$readpos}{"AvQualNonRef"}/$readinfo{$readpos}{"CntNonRef"}."\n";
+}
+# loop for the aa mutations and position of mismatches in the codon
+if ($orfs){
+  open (AA, ">$stub\_AA.txt")||die "can't open $stub\_AA.txt\n";
+  # the position of the mutation
+  print AA "Sample\tChr\tProtein\tAAPosition\tRefAA\tRefSite\tRefCodon\tFstCodonPos\tSndCodonPos\tTrdCodonPos\tCntNonSyn\tCntSyn\tNbStop\tTopAA\tTopAAcnt\tSndAA\tSndAAcnt\tTrdAA\tTrdAAcnt\tAAcoverage\n";
+  foreach my $bam (keys %aafreq){
+    foreach my $target (keys %{$aafreq{$bam}}){
+      foreach my $prot (keys %{$aafreq{$bam}{$target}}){
+        foreach my $aasite (sort {$a<=>$b} keys %{$aafreq{$bam}{$target}{$prot}}){
+          print AA "$bam\t$target\t$prot\t$aasite\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"RefAA"}."\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"RefSite"}."\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"RefCodon"}."\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"firstcodonpos"}."\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"secondcodonpos"}."\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"thirdcodonpos"}."\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"nonsyn"}."\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"syn"}."\t";
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"stop"}."\t";
+          my $topAAs=0;
+          foreach my $aa (sort { $aaorder{$bam}{$target}{$prot}{$aasite}{$b} <=> $aaorder{$bam}{$target}{$prot}{$aasite}{$a} } keys %{$aaorder{$bam}{$target}{$prot}{$aasite}}) {
+            if ($topAAs<3){# provide the top three AAs and their counts
+              print AA "$aa\t$aaorder{$bam}{$target}{$prot}{$aasite}{$aa}\t";
+              $topAAs++;
+            }
+          }
+          while ($topAAs<3){# if there are less than three different AAs
+            print AA "\t\t";
+            $topAAs++;
+          }
+          print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"AAcoverage"}."\n";
+        }
+      }
+    }
+  }
+}
 
+# count mismatches between two strings
+sub mismatch_count($$) { length( $_[ 0 ] ) - ( ( $_[ 0 ] ^ $_[ 1 ] ) =~ tr[\0][\0] ) }
 
-
-# Jo's loop for the aa mutations and position of mismatches in the codon
-
-
+sub cntTsTv{
+  #count transitions A<=>G (purine to purine) and C<=>T *pyrimidine to pyrimidines
+  #count transversions A<=>C, A<=>T, G<=>T, G<=>C 
+  my ($refbase, $Acnt, $Tcnt, $Gcnt, $Ccnt)= @_;
+  my $Ts=0;
+  my $Tv=0;
+  if ($refbase=~/A/){
+    $Ts=$Gcnt;
+    $Tv=$Ccnt+$Tcnt;
+  }
+  if ($refbase=~/T/){
+    $Ts=$Ccnt;
+    $Tv=$Acnt+$Gcnt;
+  }
+  if ($refbase=~/G/){
+    $Ts=$Acnt;
+    $Tv=$Tcnt+$Ccnt;
+  }
+  if ($refbase=~/C/){
+    $Ts=$Tcnt;
+    $Tv=$Acnt+$Gcnt;
+  }
+  #print "$refbase A:$Acnt T:$Tcnt G:$Gcnt C:$Ccnt Transition:$Ts Transversion:$Tv\n";
+  return($Ts,$Tv);
+}
 
 sub log_base {
     my ($base, $value) = @_;
