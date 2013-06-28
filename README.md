@@ -24,14 +24,11 @@ STDOUT (or logfile):
 
 Four files:
   1. A nucleotide base frequency table with:
-  
     * Sequencing error estimates
-    
     * Per site entropy 
     
   2. An amino-acid table with:
     *  dN/dS
-    
     * stop codons
     
   3. A FASTA file with the sequence around the mismatches:
