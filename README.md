@@ -14,8 +14,11 @@ Input:
 
 Output:
 
-STDOUT (or logfile):
-
+STDOUT:
+Any error message and number of reads
+ 
+ 
+ Logfile
 * Entropy per gene
 
 * Number of synonymous and non-syn changes of individual genes
@@ -41,7 +44,7 @@ Use table 1 to calculate and plot:
 
   1. Sequence error estimates => Mutation spectrum = plot distribution of frequency estimates (figure)
 
-  2. GC content versus coverage plot(add reference base in table)
+  2. GC content versus coverage plot (add reference base in table)
 
   3. Per site entropy => plot entropy along each gene and plot sliding window of entropy (figure)
   
@@ -51,6 +54,8 @@ Use table 2:
 
   1. Per aa site dN/dS => plot dN/dS along the length of each gene (figure)
   
+  2. mutations per codon position (table and figure)
+  
 Use file 3:
 
   1. Motif => web-logo plot  (figure)
@@ -59,13 +64,14 @@ use table 4:
 
   1. Mismatch location plot from first base (figure)
 
-  2. mutations per codon position (table and figure)
-
 
 Comparison between two SAM
 --------------------------
 Sequencing error estimates - consistancy between samples (replicate sample) => run independently the two  samples and output a merged table (merge and/or filter based on threshold)
 (merge script)
+
+
+
 
 Same ordering of nucleotides in replicates => sites with consistent and sig mutations between the replicates  
 
@@ -110,8 +116,6 @@ Sample\tChr\tAAPosition\tRefAA\tRefCodon\tCntNonSyn\tCntSyn\tTopAA\tTopAAcnt\tSn
 
 =>Filtered table would need to parse through the bam again to exclude the sites that have not met the threshold (Version 2)
 
-Fasta:
-Fasta sequence of 10 up and down of a mistmatch (padding with the consensus)
 
 Read mismatch table:
 ReadPos\tCntNonRef\tCntRef\tTotalCnt\tFreq\tAvQual (Freq=NonRef/TotalCnt)
@@ -123,12 +127,6 @@ NonRefCntSample1/CoverageSample1\tNonRefCntSample2/CoverageSample2\tRejectBasedO
 
 Merged AA Table
 
-
-
-TO DO:
-======
-Codon based mutations/aa mutations => non-synonymous/synonyous
-Mutations at each codon position
 
 
 Java frontend:
