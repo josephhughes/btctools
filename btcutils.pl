@@ -14,8 +14,9 @@ use Bio::DB::Sam;
 use Math::CDF;
 
 # global variables
-my ($bam, $ref,$help, $out,%basefreq,%refbase,$i,%cumulqual,$orfs,%readinfo,%IUPAC,%c2p,%aafreq,%aaorder);
+my ($bam, $ref,$help, $out,%basefreq,%refbase,$i,%cumulqual,$orfs,%readinfo,%IUPAC,%c2p,%aafreq,%aaorder,%readmis);
 # addition of avqual threshold, coverage threshold, pval threshold => need to re-think this
+# %readmis used to count the number of mismatches per reads
 # my $tpval=0;
 # my $tcov=0;
 # my $tqual=0;
@@ -39,6 +40,7 @@ if (($help)&&!($help)||!($bam)||!($ref)){
 }
 # open an output file with the motif upstream and downstream of a mismatch
 open(MOTIF,">$stub\_motif.fa")||die "Can't open output $stub\_motif.fa\n";
+open(LOG,">$stub\_log.txt")||die "Can't open output $stub\_log.txt\n";
 
 # high level API
 my $sam = Bio::DB::Sam->new(-bam  => $bam,
@@ -272,7 +274,7 @@ foreach my $target (@targets){
 	}#close the if Ns
  }
 }
-print "$bam:\nNumber of inserts $ins_cnt\nNumber of sequence with NO cigars $nocigs_cnt\nNumber of reads with Ns $Ncnt\n";
+print "$bam:\nNumber of reads with inserts: $ins_cnt\nNumber of reads with Ns: $Ncnt\nNumber of sequence used: $nocigs_cnt\n";
 
 my %shannon;#Shannon-Wiener Diversity Index (also known as Shannon's diversity index, the Shannon-Wiener index, the Shannon-Weaver index and the Shannon entropy)
 
@@ -326,7 +328,7 @@ foreach my $gene (keys %{$basefreq{$bam}}){
 	print OUT "$bam\t$gene\t$site\t$refbase\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
 	print OUT "$shannon{$bam}{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\n";
   }
-  print "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
+  print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
 }
 # Read mismatch table:
 # ReadPos\tCntNonRef\tCntRef\tTotalCnt\tFreq\tAvQual (Freq=NonRef/TotalCnt)
@@ -360,7 +362,7 @@ if ($orfs){
           print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"nonsyn"}."\t";
           print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"syn"}."\t";
           print AA $aafreq{$bam}{$target}{$prot}{$aasite}{"stop"}."\t";
-          my $topAAs=0;
+           my $topAAs=0;
           foreach my $aa (sort { $aaorder{$bam}{$target}{$prot}{$aasite}{$b} <=> $aaorder{$bam}{$target}{$prot}{$aasite}{$a} } keys %{$aaorder{$bam}{$target}{$prot}{$aasite}}) {
             if ($topAAs<3){# provide the top three AAs and their counts
               print AA "$aa\t$aaorder{$bam}{$target}{$prot}{$aasite}{$aa}\t";
