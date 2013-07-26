@@ -128,12 +128,16 @@ if ($orfs){
 }
 
 foreach my $target (@targets){
-  print "$target\n";
+  print "\n$target\n";
   my @alignments = $sam->get_features_by_location(-seq_id => $target);
   my $refobj = $sam->segment(-seq_id => $target);
   my $refseq = $refobj->dna;
+  my $total = scalar(@alignments);
+  my $progress=0;
   for my $a (@alignments) {
 	# where does the alignment start in the reference sequence
+	$progress++;
+	progress_bar( $progress, $total, 25, '=' );
 	my $seqid  = $a->seq_id;
 	my $name   = $a->display_name;
 	my $start  = $a->start; #position in the reference
@@ -182,6 +186,7 @@ foreach my $target (@targets){
 		  $readinfo{$readpos}{"CntRef"}++;
 		  $readinfo{$readpos}{"AvQualRef"}=$readinfo{$readpos}{"AvQualRef"}+$P;
 		}elsif ($refbases[$i]!~/$bases[$i]/i){ 
+		  $mismatches++;
 		  $readinfo{$readpos}{"CntNonRef"}++;
 		  $readinfo{$readpos}{"AvQualNonRef"}=$readinfo{$readpos}{"AvQualNonRef"}+$P;
 		  # motif on either side of mismatch
@@ -214,6 +219,7 @@ foreach my $target (@targets){
 			  }
 		  }
 		}
+		$readmis{$mismatches}++;
 		# create a hash for the codon and aa information only if information on start and stop are given
 		if ($orfs){
 		  #$codreg{Chr name}{ProteinName}{"Beg"}
@@ -274,7 +280,12 @@ foreach my $target (@targets){
 	}#close the if Ns
  }
 }
-print "$bam:\nNumber of reads with inserts: $ins_cnt\nNumber of reads with Ns: $Ncnt\nNumber of sequence used: $nocigs_cnt\n";
+print LOG "$bam:\nNumber of reads with inserts: $ins_cnt\nNumber of reads with Ns: $Ncnt\nNumber of sequence used: $nocigs_cnt\n";
+# print out the number of reads with 1 , 2, 3, 4, etc.. mismatches
+print LOG "Frequency of mismatches per read (mismatches: number of reads)\n";
+for my $mismatchcnt (sort {$a<=>$b} keys %readmis){
+  print LOG "$mismatchcnt: $readmis{$mismatchcnt}\n";
+} 
 
 my %shannon;#Shannon-Wiener Diversity Index (also known as Shannon's diversity index, the Shannon-Wiener index, the Shannon-Weaver index and the Shannon entropy)
 
@@ -412,4 +423,14 @@ sub cntTsTv{
 sub log_base {
     my ($base, $value) = @_;
     return log($value)/log($base);
+}
+
+sub progress_bar {
+    my ( $got, $total, $width, $char ) = @_;
+    $width ||= 25;
+    $char  ||= '=';
+    my $num_width = length $total;
+    local $| = 1;
+    printf "|%-${width}s| Processed %${num_width}s reads of %s (%.2f%%)\r", 
+        $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/+$total;
 }
