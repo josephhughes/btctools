@@ -29,10 +29,14 @@ if(!$refalign){
   my (%nuctable,@colnames);
   if (scalar(@files)>2){
     print "Will NOT be conducting the randomisation or nucletoide frequency test\n";
+    open(OUT,">$out\_multi.txt")||die "Can't open $out\_multi.txt\n";
+    print "Will conduct entropy randomisation base on nucleotide counts\n";
+    print OUT "Chr\tSite\t";
     foreach my $file (@files){
       open (FILE,"<$file\_entropy.txt")|| die "Can't open $file\_entropy.txt\n";
       my $header=<FILE>;
-      my @colnames=split(/\t/,$header);
+      chomp($header);
+      @colnames=split(/\t/,$header);
       while(<FILE>){
         chomp($_);
         my @values=split(/\t/,$_);
@@ -42,17 +46,23 @@ if(!$refalign){
           print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
         }
       }
-    }
-    foreach my $gene (keys %nuctable){
-      foreach my $site (sort {$a<=>$b} keys %{$nuctable{$gene}}){
-        print "$gene\t$site\t";
-        foreach my $sample (keys %{$nuctable{$gene}{$site}}){
-          foreach my $value (keys %{$nuctable{$gene}{$site}{$sample}}){
-            print "$nuctable{$gene}{$site}{$sample}{$value}\t";
-          }
-        }    
+      for (my $i=3; $i<scalar(@colnames);$i++){
+        print OUT "$file\_$colnames[$i]\t";
       }
     }
+    print OUT "\n";
+    foreach my $gene (keys %nuctable){
+      foreach my $site (sort {$a<=>$b} keys %{$nuctable{$gene}}){
+        print OUT "$gene\t$site\t";
+        foreach my $sample (@files){
+          for (my $i=3; $i<scalar(@colnames);$i++){
+            print OUT "$nuctable{$gene}{$site}{$sample}{$colnames[$i]}\t";
+          }
+        } 
+        print OUT "\n";   
+      }
+    }
+    close(OUT);
   }elsif (scalar(@files)==2){
     open(OUT,">$out\_rep.txt")||die "Can't open $out\_rep.txt\n";
     print "will conduct entropy randomisation base on nucleotide counts\n";
@@ -65,7 +75,7 @@ if(!$refalign){
       while(<FILE>){
         chomp($_);
         my @values=split(/\t/,$_);
-        for (my $i=4; $i<scalar(@values);$i++){#
+        for (my $i=3; $i<scalar(@values);$i++){#
           $nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]}=$values[$i];
           #print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
         }
@@ -99,7 +109,7 @@ if(!$refalign){
           }
         }
         if ($reps){
-          my $difshannon=$nuctable{$gene}{$site}{$files[0]}{"entropy"}-$nuctable{$gene}{$site}{$files[1]}{"entropy"};
+          my $difshannon=$nuctable{$gene}{$site}{$files[0]}{"entropy(base e)"}-$nuctable{$gene}{$site}{$files[1]}{"entropy(base e)"};
           my (@bbases,@qbases);
           @bbases = (@bbases, ('A') x $nuctable{$gene}{$site}{$files[0]}{"Acnt"},('C') x $nuctable{$gene}{$site}{$files[0]}{"Ccnt"},('T') x $nuctable{$gene}{$site}{$files[0]}{"Tcnt"},('G') x $nuctable{$gene}{$site}{$files[0]}{"Gcnt"});
           @qbases = (@qbases, ('A') x $nuctable{$gene}{$site}{$files[1]}{"Acnt"},('C') x $nuctable{$gene}{$site}{$files[1]}{"Ccnt"},('T') x $nuctable{$gene}{$site}{$files[1]}{"Tcnt"},('G') x $nuctable{$gene}{$site}{$files[1]}{"Gcnt"});
@@ -118,9 +128,9 @@ if(!$refalign){
         print OUT "\n";    
       }
     }
-
+    close(OUT);
   }else{
-    print "expecting two or more input files\n";
+    print "Expecting two or more input files\n";
   }
 }elsif($refalign){
   my (%nuctable);
