@@ -24,12 +24,13 @@ my @files=split(/,/,$files);#list of files to merge
 my (%chr);
 open(OUT,">$out\_entropy.txt")||die "Can't open $out\_entropy.txt\n";
 if(!$refalign){
-
-
-
-
-
-
+  if (scalar(@files)>2){
+    print "Will not be conducting the randomisation or nucletoide frequency test\n";
+  }elsif (scalar(@files)==2){
+    print "will conduct entropy randomisation base on nucleotide counts\n";
+  }else{
+    print "expecting two or more input files\n";
+  }
 }elsif($refalign){
   my (@parsefiles);
   my @alignments=split(/,/,$refalign);# all the different gene alignments
@@ -42,7 +43,7 @@ if(!$refalign){
       my @values=split(/\t/,$_);
       for (my $i=0; $i<scalar(@values);$i++){
         $nuctable{$values[1]}{$file}{$values[2]}{$colnames[$i]}=$values[$i];#hash of all the stubs that share a particular gene sequences
-        #print ">$values[1]< $file $values[2]\n";
+        print ">$values[1]< $file $values[2]\n";
         $chr{$values[1]}++;
       }
     }
