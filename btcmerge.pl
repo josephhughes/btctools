@@ -205,7 +205,7 @@ if(!$refalign){
   open(OUT,">$out\_realign.txt")||die "Can't open $out\_realign.txt\n";
   open(AAOUT,">$out\_AA_realign.txt")||die "Can't open $out\_AA_realign.txt\n";
   print OUT "Chr\tAlignPos\t";
-  print AAOUT "Protein\tAlignPos\tAAPosition\t";
+  print AAOUT "Protein\tAlignPos\t";
   foreach my $file (@files){
     open (FILE,"<$file\_entropy.txt")|| die "Can't open $file\_entropy.txt\n";
     my $header=<FILE>;
@@ -231,19 +231,15 @@ if(!$refalign){
 	  my @values=split(/\t/,$_);
 	  for (my $j=1; $j<scalar(@values);$j++){
 	    #print "$values[1] $file $values[2]\n";
-	    $aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]}=$values[$j];
+	    $aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
 	    #print "$aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]} $values[2] $values[3] $file $aacolnames[$j]\n";
 	  }
-    }
-    for (my $j=1; $j<scalar(@aacolnames);$j++){
-	  print AAOUT "$file\_$aacolnames[$j]\t";
     }
     close(FILE);
     close(AAFILE);
   }
-  print AAOUT "\n";    
   #read in the alignment
-  my (%genes);
+  my (%genes,%gappos,%newtable);
   my @alignments=split(/,/,$refalign);# all the different gene alignments
   foreach my $alignment (@alignments){
     my $seq_in  = Bio::SeqIO->new(-format => 'fasta',-file   => $alignment);
@@ -263,6 +259,27 @@ if(!$refalign){
 	    }
 	    $refseq{$alignment}{$alnpos}{$id}{"site"}=$alnpos-$gapcnt;# from the alignment position get the real position
 	    $refseq{$alignment}{$alnpos}{$id}{"base"}=$bases[$i];
+	    $gappos{$id}{$alnpos-$gapcnt}=$bases[$i];
+	    if ($bases[$i]=~/-/){
+	      foreach my $prot (keys %{$aatable{$id}}){
+	        if (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
+	        foreach my $sample (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
+	          foreach my $col (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}}){
+	            $newtable{$id}{$prot}{$alnpos}{$sample}{$col}="NA";
+	          }
+	        }
+	        }
+	      }
+	    }else{
+	      foreach my $prot (keys %{$aatable{$id}}){
+	        foreach my $sample (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
+	          foreach my $col (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}}){
+	            $newtable{$id}{$prot}{$alnpos}{$sample}{$col}=$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}{$col};
+	          }
+	        }
+	      }
+	    
+	    }
 	  }
 	}
   }
@@ -306,6 +323,63 @@ if(!$refalign){
       print OUT "\n";
     }
   }
+  foreach my $id (keys %{$genes{$alignments[0]}}){
+    print AAOUT "Gene\t";
+    foreach my $sample (keys %{$sharedref{$id}}){
+      for (my $j=2; $j<scalar(@aacolnames);$j++){
+        print AAOUT "$sample\_$aacolnames[$j]\t";
+      }
+    }
+  }
+  print AAOUT "\n";
+  
+#   foreach my $gene (keys %aatable){
+#     foreach my $prot (keys %{$aatable{$gene}}){
+#       foreach my $site (sort {$a<=>$b} keys %{$aatable{$gene}{$prot}}){
+#         print AAOUT "$gene\t$prot\t$site\t";
+#         if ($gappos{$gene}{$site}=~/-/){
+#           print "$site is a gap $gene $gappos{$gene}{$site}\n";
+#           for (my $j=2; $j<scalar(@aacolnames);$j++){
+#             foreach my $sample (keys %{$sharedref{$gene}}){
+#               for (my $j=2; $j<scalar(@aacolnames);$j++){
+#                 print AAOUT "NA\t";
+#               }
+#             }
+#           }
+#         }else{
+#           #print "$site is a NOT gap\n";
+#           foreach my $sample (keys %{$sharedref{$gene}}){
+#             for (my $j=2; $j<scalar(@colnames);$j++){
+#               if ($aatable{$gene}{$site}{$sample}{$colnames[$j]}=~/./){
+#                 print AAOUT "$aatable{$gene}{$site}{$sample}{$colnames[$j]}\t";
+#               }else{
+#                 print AAOUT "NA\t";
+#               }
+#             }
+#           } 
+#         }
+#         print AAOUT "\n";
+#       }
+#       print AAOUT "\n";
+#     }
+#     
+#   }
+  #$newtable{$id}{$prot}{$alnpos}{$sample}{$col}
+  foreach my $chr (keys %newtable){
+    foreach my $prot (keys %{$newtable{$chr}}){
+      foreach my $alnpos (sort {$a<=>$b} keys %{$newtable{$chr}{$prot}}){
+        print AAOUT "$chr\t$prot\t$alnpos\t";
+        foreach my $sample (keys %{$newtable{$chr}{$prot}{$alnpos}}){
+          foreach my $col (keys %{$newtable{$chr}{$prot}{$alnpos}{$sample}}){
+            print AAOUT "$newtable{$chr}{$prot}{$alnpos}{$sample}{$col}\t";
+          }
+        }
+        print AAOUT "\n";
+      }
+      
+    }
+  }
+  
 }
   
   
