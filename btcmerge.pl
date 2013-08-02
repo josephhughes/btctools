@@ -13,7 +13,7 @@ use Bio::SeqIO;
 # go through the text-tab to find the names of parsesam files
 
 my ($files,$out,$refalign,%ref,%nuccnt,%refseq,%genes,%aatable);
-#my $reps;
+my $reps;
 &GetOptions(
 	    'files:s'      => \$files,#the stubs, comma separated
 	    'out:s'         => \$out, # output 
@@ -27,11 +27,9 @@ my (%chr);
 if(!$refalign){
   my (%nuctable,@colnames,%aatable,@aacolnames);
   if (scalar(@files)>2){
-    open(OUT,">$out\_entropy.txt")||die "Can't open $out\_entropy.txt\n";
-    open(AAOUT,">$out\_AA.txt")||die "Can't open $out\_AA.txt\n";
-    print "Will NOT be conducting the randomisation or nucletoide frequency test\n";
     open(OUT,">$out\_multi.txt")||die "Can't open $out\_multi.txt\n";
-    print "Will conduct entropy randomisation base on nucleotide counts\n";
+    open(AAOUT,">$out\_AA_multi.txt")||die "Can't open $out\_AA_multi.txt\n";
+    #print "Will NOT be conducting the randomisation or nucletoide frequency test\n";
     print OUT "Chr\tSite\t";
     print AAOUT "Protein\tAAPosition\t";
     foreach my $file (@files){
@@ -68,6 +66,8 @@ if(!$refalign){
       for (my $j=4; $j<scalar(@aacolnames);$j++){
         print AAOUT "$file\_$aacolnames[$j]\t";
       }
+      close(FILE);
+      close(AAFILE);
     }
     print OUT "\n";
     print AAOUT "\n";    
@@ -136,6 +136,8 @@ if(!$refalign){
       for (my $j=4; $j<scalar(@aacolnames);$j++){
         print AAOUT "$file\_$aacolnames[$j]\t";
       }
+      close(AAFILE);
+      close(FILE);
     }
     print AAOUT "\n";    
     print OUT "Truths";
@@ -199,34 +201,46 @@ if(!$refalign){
     print "Expecting two or more input files\n";
   }
 }elsif($refalign){
-  my (%nuctable);
-  my @alignments=split(/,/,$refalign);# all the different gene alignments
+  my (%nuctable,@colnames,%aatable,@aacolnames,%sharedref);
+  open(OUT,">$out\_realign.txt")||die "Can't open $out\_realign.txt\n";
+  open(AAOUT,">$out\_AA_realign.txt")||die "Can't open $out\_AA_realign.txt\n";
+  print OUT "Chr\tAlignPos\t";
+  print AAOUT "Protein\tAlignPos\t";
   foreach my $file (@files){
     open (FILE,"<$file\_entropy.txt")|| die "Can't open $file\_entropy.txt\n";
     my $header=<FILE>;
-    my @colnames=split(/\t/,$header);
+    chomp($header);
+    @colnames=split(/\t/,$header);
     while(<FILE>){
-      chomp($_);
-      my @values=split(/\t/,$_);
-      for (my $i=0; $i<scalar(@values);$i++){
-        $nuctable{$values[1]}{$file}{$values[2]}{$colnames[$i]}=$values[$i];#hash of all the stubs that share a particular gene sequences
-        print ">$values[1]< $file $values[2]\n";
-        $chr{$values[1]}++;
-      }
+	  chomp($_);
+	  my @values=split(/\t/,$_);
+	  for (my $i=1; $i<scalar(@values);$i++){
+	    #print "$values[1] $file $values[2]\n";
+	    $nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]}=$values[$i];
+	    print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
+	    $sharedref{$values[1]}{$file}++;
+	  }
     }
-    close(FILE);
     open (AAFILE,"<$file\_AA.txt")|| die "Can't open $file\_AA.txt\n";
     my $aaheader=<AAFILE>;
-    my @aacolnames=split(/\t/,$aaheader);
+    print "$aaheader\n";
+    chomp($aaheader);
+    @aacolnames=split(/\t/,$aaheader);
     while(<AAFILE>){
-      chomp($_);
-      my @aavalues=split(/\t/,$_);
-      for (my $i=0; $i<scalar(@aavalues);$i++){
-        $aatable{$file}{$aacolnames[$i]}=$aavalues[$i];
-      }
+	  chomp($_);
+	  my @values=split(/\t/,$_);
+	  for (my $j=1; $j<scalar(@values);$j++){
+	    #print "$values[1] $file $values[2]\n";
+	    $aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
+	    #print "$aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]} $values[2] $values[3] $file $aacolnames[$j]\n";
+	  }
     }
+    close(FILE);
     close(AAFILE);
-  }  
+  }
+  #read in the alignment
+  my (%genes,%gappos,%newtable);
+  my @alignments=split(/,/,$refalign);# all the different gene alignments
   foreach my $alignment (@alignments){
     my $seq_in  = Bio::SeqIO->new(-format => 'fasta',-file   => $alignment);
 	while( my $seq = $seq_in->next_seq() ) {
@@ -235,77 +249,137 @@ if(!$refalign){
 	  my $seq_str=$seq->seq();
 	  $sequences{$id}=$seq_str;
 	  $length{$alignment}=length($seq_str);
+	  $genes{$alignment}{$id}++;
+	  my $gapcnt=0;
 	  my @bases = split(//,$seq_str);
 	  for (my $i = 0; $i<scalar(@bases); $i++){
-	    my $site=$i+1;
-	    $refseq{$alignment}{$id}{$site}=$bases[$i];# $id corresponds to Chr above
+	    my $alnpos=$i+1;
+	    if ($bases[$i]=~/-/){
+	      $gapcnt++;
+	    }
+	    $refseq{$alignment}{$alnpos}{$id}{"site"}=$alnpos-$gapcnt;# from the alignment position get the real position
+	    $refseq{$alignment}{$alnpos}{$id}{"base"}=$bases[$i];
+	    $gappos{$id}{$alnpos-$gapcnt}=$bases[$i];
+	    if ($bases[$i]=~/-/){
+	      foreach my $prot (keys %{$aatable{$id}}){
+	        if (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
+	        foreach my $sample (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
+	          foreach my $col (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}}){
+	            $newtable{$id}{$prot}{$alnpos}{$sample}{$col}="NA";
+	          }
+	        }
+	        }
+	      }
+	    }else{
+	      foreach my $prot (keys %{$aatable{$id}}){
+	        foreach my $sample (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
+	          foreach my $col (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}}){
+	            $newtable{$id}{$prot}{$alnpos}{$sample}{$col}=$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}{$col};
+	          }
+	        }
+	      }
+	    
+	    }
 	  }
 	}
   }
-  for my $id (keys %nuctable){
-    for my $file (keys %{$nuctable{$id}}){
-      for my $site (keys %{$nuctable{$id}{$file}}){
-        for my $info (keys %{$nuctable{$id}{$file}{$site}}){
-          print ">$id<\t$file\t$site\t$info\t$nuctable{$id}{$file}{$site}{$info}\n";
-        }
+  foreach my $id (keys %{$genes{$alignments[0]}}){
+    print OUT "Gene\t";
+    foreach my $sample (keys %{$sharedref{$id}}){
+      for (my $j=2; $j<scalar(@colnames);$j++){
+        print OUT "$sample\_$colnames[$j]\t";
       }
     }
   }
-        
-  
-  
-  # go through each alignment and check all mutation possibilities
-  # store the name of the gene id and the mutation and aamutation for each alignment site
-  my (%gap,%table,%nuctable);
-  foreach my $alignment (keys %refseq){
-    print "Parsing $alignment...\n";
-    my $nogapsite;
-    for (my $i = 0; $i<$length{$alignment}; $i++){
-      
-      
-      for my $id (keys %{$refseq{$alignment}}){
-        my $alpos = $i + 1;
-        $gap{$id}{$alpos}=$gap{$id}{$alpos-1};
-        $nogapsite=$alpos-($gap{$id}{$alpos-1});
-        
-        
-        #print "$id Alignment position $alpos Number of gaps so far: $gap{$id}{$alpos} Site: $nogapsite\n";
-        print OUT "$alpos\t";
-	    #print "$alignment $id $refseq{$alignment}{$id}{$alpos}\n";
-	    if ($refseq{$alignment}{$id}{$alpos}=~/-/){
-	       
-	       
-	       $gap{$id}{$alpos}++;#corresponds to the number of gaps seen before this site in the alignment
-	       print ">$id< $alpos $alignment $refseq{$alignment}{$id}{$alpos} >$gap{$id}{$alpos}< $nogapsite\n";
-	       print keys %{$nuctable{$id}},"\n";
-	       print keys %chr,"\n";
-	       for my $sample (keys %{$nuctable{$id}}){
-	         print "$sample\t$id\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\n"; 
-	         
-	       }
-	       if (%{$nuctable{$id}}){
-	         print keys %{$nuctable{$id}},"\n";
-	       }else{
-	         print "THE VALUE >$id< DOESN T EXISTS\n";
-	       
-	       }
-	    }else{ 
-	       print "$id $alpos $alignment $refseq{$alignment}{$id}{$alpos} $gap{$id}{$alpos} $nogapsite\n";
-	       for my $file (keys %{$nuctable{$id}}){
-	           
-	           
-	         print OUT "$file\t$id\t$nogapsite\t";
-	         for my $sample (keys %{$nuctable{$id}}){
-	           for my $info (keys %{$nuctable{$id}{$sample}{$nogapsite}}){
-	             print "$nuctable{$id}{$file}{$nogapsite}{$info}\t";
-	           }
-	         }	        
-	       }
-	     }
-	   }
-     }
-     print OUT "\n";
+  print OUT "\n";
+  foreach my $gene (keys %refseq){
+    foreach my $alnpos (sort {$a<=>$b} keys %{$refseq{$gene}}){
+      print OUT "$gene\t$alnpos\t";
+      foreach my $id (keys %{$genes{$gene}}){    
+        print OUT "$id\t";
+        my $site=$refseq{$gene}{$alnpos}{$id}{"site"};
+        my $base=$refseq{$gene}{$alnpos}{$id}{"base"};
+        #print "$nuctable{$id}{$site}{$sample}{$colnames[$j]}\t"; 
+        if ($refseq{$gene}{$alnpos}{$id}{"base"}=~/-/){
+          #print OUT "NA\tNA\t";
+          foreach my $sample (keys %{$sharedref{$id}}){
+            for (my $j=2; $j<scalar(@colnames);$j++){
+              print OUT "NA\t";
+            }
+          }
+        }else{    
+         # print OUT "$site\t$base\t";     
+          foreach my $sample (keys %{$sharedref{$id}}){
+            for (my $j=2; $j<scalar(@colnames);$j++){
+              if ($nuctable{$id}{$site}{$sample}{$colnames[$j]}=~/./){
+                print OUT "$nuctable{$id}{$site}{$sample}{$colnames[$j]}\t";
+              }else{
+                print OUT "NA\t";
+              }
+            }
+          } 
+        }
+      }
+      print OUT "\n";
+    }
   }
+  foreach my $id (keys %{$genes{$alignments[0]}}){
+    print AAOUT "Gene\t";
+    foreach my $sample (keys %{$sharedref{$id}}){
+      for (my $j=2; $j<scalar(@aacolnames);$j++){
+        print AAOUT "$sample\_$aacolnames[$j]\t";
+      }
+    }
+  }
+  print AAOUT "\n";
+  
+#   foreach my $gene (keys %aatable){
+#     foreach my $prot (keys %{$aatable{$gene}}){
+#       foreach my $site (sort {$a<=>$b} keys %{$aatable{$gene}{$prot}}){
+#         print AAOUT "$gene\t$prot\t$site\t";
+#         if ($gappos{$gene}{$site}=~/-/){
+#           print "$site is a gap $gene $gappos{$gene}{$site}\n";
+#           for (my $j=2; $j<scalar(@aacolnames);$j++){
+#             foreach my $sample (keys %{$sharedref{$gene}}){
+#               for (my $j=2; $j<scalar(@aacolnames);$j++){
+#                 print AAOUT "NA\t";
+#               }
+#             }
+#           }
+#         }else{
+#           #print "$site is a NOT gap\n";
+#           foreach my $sample (keys %{$sharedref{$gene}}){
+#             for (my $j=2; $j<scalar(@colnames);$j++){
+#               if ($aatable{$gene}{$site}{$sample}{$colnames[$j]}=~/./){
+#                 print AAOUT "$aatable{$gene}{$site}{$sample}{$colnames[$j]}\t";
+#               }else{
+#                 print AAOUT "NA\t";
+#               }
+#             }
+#           } 
+#         }
+#         print AAOUT "\n";
+#       }
+#       print AAOUT "\n";
+#     }
+#     
+#   }
+  #$newtable{$id}{$prot}{$alnpos}{$sample}{$col}
+  foreach my $chr (keys %newtable){
+    foreach my $prot (keys %{$newtable{$chr}}){
+      foreach my $alnpos (sort {$a<=>$b} keys %{$newtable{$chr}{$prot}}){
+        print AAOUT "$chr\t$prot\t$alnpos\t";
+        foreach my $sample (keys %{$newtable{$chr}{$prot}{$alnpos}}){
+          foreach my $col (keys %{$newtable{$chr}{$prot}{$alnpos}{$sample}}){
+            print AAOUT "$newtable{$chr}{$prot}{$alnpos}{$sample}{$col}\t";
+          }
+        }
+        print AAOUT "\n";
+      }
+      
+    }
+  }
+  
 }
   
   
