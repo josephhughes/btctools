@@ -7,7 +7,7 @@
 # produces a table with Sample\tChr\tPosition\tRefBase\tCoverage\t
 # AvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tentropy(base 2)\tsimpson\tNonRefCnt
 # CntTv\tCntTs\tCodonPos\tCntNonSyn\tCntSyn\tOrderATCG
-
+# example command: ./btcutils -bam SamTestFiles/S1_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -stub out
 use strict;
 use Getopt::Long; 
 use Bio::DB::Sam;
