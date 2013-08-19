@@ -99,7 +99,7 @@ if(!$refalign){
   }elsif (scalar(@files)==2){
     open(OUT,">$out\_rep.txt")||die "Can't open $out\_rep.txt\n";
     open(AAOUT,">$out\_AA_rep.txt")||die "Can't open $out\_AA_rep.txt\n";
-    print "will conduct entropy randomisation base on nucleotide counts\n";
+#    print "will conduct entropy randomisation base on nucleotide counts\n";
     print OUT "Chr\tSite\t";
     print AAOUT "Protein\tAAPosition\t";
     foreach my $file (@files){
