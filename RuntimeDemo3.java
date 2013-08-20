@@ -35,22 +35,26 @@ public class RuntimeDemo3 {
 	   try
 	   {
          //fileIn = new FileInputStream("1351_LPAIH7N1_log.txt");
-         fileOut = new FileOutputStream("testOut.txt");
+         //fileOut = new FileOutputStream("testOut.txt");
+         // HERE put the path to the perl executable
          String btcexe = "./btcutils ";
+         // provide the path to the input bam file and bai file is needed in same folder
          String bamfile = "-bam SamTestFiles/S1_refHPAI_cons_stampy.bam ";
+         // provide the path to the reference file
          String ref = "-ref SamTestFiles/refHPAI_cons.fa ";
+         // provide a stub for the output file
          String output = "-stub out";
          // print a message
          String cmd = btcexe + bamfile + ref + output;
          // print a message
          System.out.println("Executing btcutils");
          System.out.println(cmd);
-         //System.out.println(Arrays.toString(cmdArray));
-         // create a process and execute cmdArray
+         // create a process and execute cmd
          Process process = Runtime.getRuntime().exec(cmd);
          String line;
          BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
          while ((line = input.readLine()) != null) {
+           // print out the perl STDOUT
            System.out.println(line);
          }
          input.close();
