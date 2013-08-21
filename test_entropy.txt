@@ -1,4 +1,5 @@
 Sample	Chr	Position	RefBase	Coverage	AvQual	Acnt	Apval	Ccnt	Cpval	Tcnt	Tpval	Gcnt	Gpval	entropy(base e)	NonRefCnt	CntTv	CntTs	OrderOfNucs
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1	a	0														
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	2	G	2	0.000708707365520139	0	1	0	1	0	1	2	5.58073478540422e-08	0	0	0	0	G
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	3	C	2	0.000162709386338152	0	1	2	2.94159385738624e-09	0	1	0	1	0	0	0	0	C
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	4	A	3	0.000128127286808509	2	5.47204470624507e-09	1	0.0001281218146858	0	1	0	1	0.636514168294813	1	0	1	AC
@@ -1375,6 +1376,25 @@ SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1374	a	75	0.000303396027698
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1375	a	35	0.000359529883536672	35	0	0	1	0	1	0	1	0	35	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1376	a	32	0.000558876623214431	32	0	0	1	0	1	0	1	0	32	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1377	a	29	0.000483445697176406	29	0	0	1	0	1	0	1	0	29	0	0	A
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1378	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1379	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1380	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1381	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1382	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1383	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1384	G	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1385	T	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1386	T	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1387	T	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1388	C	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1389	T	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1390	A	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1391	C	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	NA_Influenza	1392	T	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PA_Influenza	1	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PA_Influenza	2	g	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PA_Influenza	3	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PA_Influenza	4	a	0														
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PA_Influenza	5	a	1	0.000251188643150958	1	8.37295477169597e-05	0	1	0	1	0	1	0	1	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PA_Influenza	6	a	1	0.000251188643150958	1	8.37295477169597e-05	0	1	0	1	0	1	0	1	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PA_Influenza	7	A	2	0.000501187233627273	2	2.7909849320551e-08	0	1	0	1	0	1	0	0	0	0	A
@@ -7248,6 +7268,25 @@ SamTestFiles/S1_refHPAI_cons_stampy.bam	HA_Influenza	1740	C	1	0.0001584893192461
 SamTestFiles/S1_refHPAI_cons_stampy.bam	HA_Influenza	1741	T	1	0.000251188643150958	0	1	0	1	1	8.37295477169597e-05	0	1	0	0	0	0	T
 SamTestFiles/S1_refHPAI_cons_stampy.bam	HA_Influenza	1742	A	1	0.000398107170553497	1	0.00013270239018448	0	1	0	1	0	1	0	0	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	HA_Influenza	1743	C	1	0.000251188643150958	0	1	1	8.37295477169597e-05	0	1	0	1	0	0	0	0	C
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	1	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2	g	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	3	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	4	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	5	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	6	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	7	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	8	g	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	9	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	10	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	11	g	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	12	g	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	13	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	14	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	15	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	16	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	17	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	18	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	19	a	0														
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	20	T	1	0.000199526231496888	0	1	0	1	1	6.65087438322942e-05	0	1	0	0	0	0	T
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	21	T	1	0.000199526231496888	0	1	0	1	1	6.65087438322942e-05	0	1	0	0	0	0	T
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	22	T	4	0.000173514955705649	0	1	0	1	4	0	0	1	0	0	0	0	T
@@ -9554,6 +9593,21 @@ SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2322	A	5	0.010155253028993
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2323	A	1	0.000125892541179417	1	4.19641803931503e-05	0	1	0	1	0	1	0	0	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2324	A	1	0.000199526231496888	1	6.65087438322942e-05	0	1	0	1	0	1	0	0	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2325	A	1	0.000199526231496888	1	6.65087438322942e-05	0	1	0	1	0	1	0	0	0	0	A
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2326	A	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2327	T	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2328	G	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2329	C	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2330	C	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2331	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2332	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2333	g	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2334	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2335	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2336	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2337	c	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2338	t	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2339	a	0														
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB1_Influenza	2340	c	0														
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NP_Influenza	1	a	1	0.000501187233627273	1	0.000167062411209118	0	1	0	1	0	1	0	1	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NP_Influenza	2	g	2	0.000142190930212764	0	1	0	1	0	1	2	2.24647345170581e-09	0	2	0	0	G
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NP_Influenza	3	c	2	0.0001790077753715	0	1	2	3.56042040294824e-09	0	1	0	1	0	2	0	0	C
@@ -11116,6 +11170,7 @@ SamTestFiles/S1_refHPAI_cons_stampy.bam	NP_Influenza	1559	T	8	0.0002856263195661
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NP_Influenza	1560	A	8	0.000401484977117289	8	0	0	1	0	1	0	1	0	0	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NP_Influenza	1561	C	8	0.000260988445747497	0	1	8	0	0	1	0	1	0	0	0	0	C
 SamTestFiles/S1_refHPAI_cons_stampy.bam	NP_Influenza	1562	T	2	0.000158489319246111	0	1	0	1	2	2.79098499866848e-09	0	1	0	0	0	0	T
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	1	a	0														
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	2	g	4	0.000278346849891028	0	1	0	1	0	1	4	0	0	4	0	0	G
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	3	c	5	0.000348868948808861	0	1	5	0	0	1	0	1	0	5	0	0	C
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	4	a	5	0.000183111466596577	5	0	0	1	0	1	0	1	0	5	0	0	A
@@ -13455,3 +13510,4 @@ SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	2337	C	10	0.00090835090561
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	2338	T	10	0.00866790574764037	0	1	0	1	10	0	0	1	0	0	0	0	T
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	2339	A	7	0.000865298358806802	7	0	0	1	0	1	0	1	0	0	0	0	A
 SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	2340	C	7	0.000270057520645555	0	1	7	0	0	1	0	1	0	0	0	0	C
+SamTestFiles/S1_refHPAI_cons_stampy.bam	PB2_Influenza	2341	t	0														
