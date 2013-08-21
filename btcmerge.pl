@@ -43,7 +43,7 @@ if(!$refalign){
         for (my $i=3; $i<scalar(@values);$i++){
           #print "$values[1] $file $values[2]\n";
           $nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]}=$values[$i];
-          print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
+          #print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
         }
       }
       for (my $i=3; $i<scalar(@colnames);$i++){
@@ -51,7 +51,7 @@ if(!$refalign){
       }
       open (AAFILE,"<$file\_AA.txt")|| die "Can't open $file\_AA.txt\n";
       my $aaheader=<AAFILE>;
-      print "$aaheader\n";
+      #print "$aaheader\n";
       chomp($aaheader);
       @aacolnames=split(/\t/,$aaheader);
       while(<AAFILE>){
@@ -201,11 +201,11 @@ if(!$refalign){
     print "Expecting two or more input files\n";
   }
 }elsif($refalign){
-  my (%nuctable,@colnames,%aatable,@aacolnames,%sharedref);
+  my (%nuctable,@colnames,%aatable,@aacolnames,%sharedref,%proteins);
   open(OUT,">$out\_realign.txt")||die "Can't open $out\_realign.txt\n";
   open(AAOUT,">$out\_AA_realign.txt")||die "Can't open $out\_AA_realign.txt\n";
   print OUT "Chr\tAlignPos\t";
-  print AAOUT "Protein\tAlignPos\t";
+  #print AAOUT "Protein\tAlignPos\t";
   foreach my $file (@files){
     open (FILE,"<$file\_entropy.txt")|| die "Can't open $file\_entropy.txt\n";
     my $header=<FILE>;
@@ -217,11 +217,12 @@ if(!$refalign){
 	  for (my $i=1; $i<scalar(@values);$i++){
 	    #print "$values[1] $file $values[2]\n";
 	    $nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]}=$values[$i];
-	    print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
+	    #print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
 	    $sharedref{$values[1]}{$file}++;
 	  }
     }
     open (AAFILE,"<$file\_AA.txt")|| die "Can't open $file\_AA.txt\n";
+    print "$file\_AA.txt\n";
     my $aaheader=<AAFILE>;
     print "$aaheader\n";
     chomp($aaheader);
@@ -230,9 +231,12 @@ if(!$refalign){
 	  chomp($_);
 	  my @values=split(/\t/,$_);
 	  for (my $j=1; $j<scalar(@values);$j++){
+	    # Chr	Protein	AAPosition	RefAA	RefSite	RefCodon	FstCodonPos	SndCodonPos	TrdCodonPos	CntNonSyn	CntSyn	NbStop	TopAA	TopAAcnt	SndAA	SndAAcnt	TrdAA	TrdAAcnt	AAcoverage
 	    #print "$values[1] $file $values[2]\n";
+	    # listed all files that have same chr, protein, refsite 
 	    $aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
 	    #print "$aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]} $values[2] $values[3] $file $aacolnames[$j]\n";
+	    $proteins{$values[1]}{$values[2]}++;
 	  }
     }
     close(FILE);
@@ -260,26 +264,6 @@ if(!$refalign){
 	    $refseq{$alignment}{$alnpos}{$id}{"site"}=$alnpos-$gapcnt;# from the alignment position get the real position
 	    $refseq{$alignment}{$alnpos}{$id}{"base"}=$bases[$i];
 	    $gappos{$id}{$alnpos-$gapcnt}=$bases[$i];
-	    if ($bases[$i]=~/-/){
-	      foreach my $prot (keys %{$aatable{$id}}){
-	        if (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
-	        foreach my $sample (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
-	          foreach my $col (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}}){
-	            $newtable{$id}{$prot}{$alnpos}{$sample}{$col}="NA";
-	          }
-	        }
-	        }
-	      }
-	    }else{
-	      foreach my $prot (keys %{$aatable{$id}}){
-	        foreach my $sample (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}}){
-	          foreach my $col (keys %{$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}}){
-	            $newtable{$id}{$prot}{$alnpos}{$sample}{$col}=$aatable{$id}{$prot}{$alnpos-$gapcnt}{$sample}{$col};
-	          }
-	        }
-	      }
-	    
-	    }
 	  }
 	}
   }
@@ -292,6 +276,7 @@ if(!$refalign){
     }
   }
   print OUT "\n";
+  my (%alnpos, %gapcnt);
   foreach my $gene (keys %refseq){
     foreach my $alnpos (sort {$a<=>$b} keys %{$refseq{$gene}}){
       print OUT "$gene\t$alnpos\t";
@@ -302,13 +287,20 @@ if(!$refalign){
         #print "$nuctable{$id}{$site}{$sample}{$colnames[$j]}\t"; 
         if ($refseq{$gene}{$alnpos}{$id}{"base"}=~/-/){
           #print OUT "NA\tNA\t";
+          foreach my $prot (keys %{$proteins{$id}}){
+            $gapcnt{$prot}{$id}++;
+            $alnpos{$prot}{$id}{$alnpos}="NA";
+          }
           foreach my $sample (keys %{$sharedref{$id}}){
             for (my $j=2; $j<scalar(@colnames);$j++){
               print OUT "NA\t";
             }
           }
         }else{    
-         # print OUT "$site\t$base\t";     
+         # print OUT "$site\t$base\t";
+         foreach my $prot (keys %{$proteins{$id}}){     
+           $alnpos{$prot}{$id}{$alnpos}=$alnpos-$gapcnt{$prot}{$id};
+         }
           foreach my $sample (keys %{$sharedref{$id}}){
             for (my $j=2; $j<scalar(@colnames);$j++){
               if ($nuctable{$id}{$site}{$sample}{$colnames[$j]}=~/./){
@@ -322,67 +314,49 @@ if(!$refalign){
       }
       print OUT "\n";
     }
+     
+    
   }
+  
+  # need to repeat the above for each protein
+  # listed all files that have same chr, protein, refsite 
+  #$aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
   foreach my $id (keys %{$genes{$alignments[0]}}){
     print AAOUT "Gene\t";
     foreach my $sample (keys %{$sharedref{$id}}){
-      for (my $j=2; $j<scalar(@aacolnames);$j++){
-        print AAOUT "$sample\_$aacolnames[$j]\t";
+      for (my $j=2; $j<scalar(@colnames);$j++){
+        print AAOUT "$sample\_$colnames[$j]\t";
       }
     }
   }
+  # listed all files that have same chr, protein, refsite 
+  # $aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
   print AAOUT "\n";
-  
-#   foreach my $gene (keys %aatable){
-#     foreach my $prot (keys %{$aatable{$gene}}){
-#       foreach my $site (sort {$a<=>$b} keys %{$aatable{$gene}{$prot}}){
-#         print AAOUT "$gene\t$prot\t$site\t";
-#         if ($gappos{$gene}{$site}=~/-/){
-#           print "$site is a gap $gene $gappos{$gene}{$site}\n";
-#           for (my $j=2; $j<scalar(@aacolnames);$j++){
-#             foreach my $sample (keys %{$sharedref{$gene}}){
-#               for (my $j=2; $j<scalar(@aacolnames);$j++){
-#                 print AAOUT "NA\t";
-#               }
-#             }
-#           }
-#         }else{
-#           #print "$site is a NOT gap\n";
-#           foreach my $sample (keys %{$sharedref{$gene}}){
-#             for (my $j=2; $j<scalar(@colnames);$j++){
-#               if ($aatable{$gene}{$site}{$sample}{$colnames[$j]}=~/./){
-#                 print AAOUT "$aatable{$gene}{$site}{$sample}{$colnames[$j]}\t";
-#               }else{
-#                 print AAOUT "NA\t";
-#               }
-#             }
-#           } 
-#         }
-#         print AAOUT "\n";
-#       }
-#       print AAOUT "\n";
-#     }
-#     
-#   }
-  #$newtable{$id}{$prot}{$alnpos}{$sample}{$col}
-  foreach my $chr (keys %newtable){
-    foreach my $prot (keys %{$newtable{$chr}}){
-      foreach my $alnpos (sort {$a<=>$b} keys %{$newtable{$chr}{$prot}}){
-        print AAOUT "$chr\t$prot\t$alnpos\t";
-        foreach my $sample (keys %{$newtable{$chr}{$prot}{$alnpos}}){
-          foreach my $col (keys %{$newtable{$chr}{$prot}{$alnpos}{$sample}}){
-            print AAOUT "$newtable{$chr}{$prot}{$alnpos}{$sample}{$col}\t";
+  foreach my $gene (keys %refseq){
+    foreach my $alnpos (sort {$a<=>$b} keys %{$refseq{$gene}}){
+      foreach my $id (keys %{$genes{$gene}}){   
+        foreach my $prot (keys %{$proteins{$id}}){
+          my $site = $alnpos{$prot}{$id}{$alnpos};
+          print AAOUT "$gene\t$id\t$prot\t$alnpos\t$alnpos{$prot}{$id}{$alnpos}\t";
+          foreach my $sample (keys %{$sharedref{$id}}){
+
+            for (my $j=1; $j<scalar(@aacolnames);$j++){
+              if ($aatable{$id}{$site}{$sample}{$aacolnames[$j]}=~/./){
+                print AAOUT "$aatable{$id}{$site}{$sample}{$aacolnames[$j]}\t";
+              }else{
+                print AAOUT "NA\t";
+              }
+            }
           }
         }
-        print AAOUT "\n";
       }
-      
+      print AAOUT "\n";
     }
+    print "\n";
   }
-  
 }
-  
-  
+
+
 sub randomize {
   my ($bground,$query) = @_;
   my (%bbasecnt,%qbasecnt,@diffs,@allbases);
