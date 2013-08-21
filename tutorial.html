@@ -43,13 +43,31 @@
 </code></pre>
 
 <p>Bear in mind that the bam file needs its associated index file (.bai). All of the arguments above are necessary to run btcutils. The output from the latter command will be 4 files:
-_entropy.txt which contains the frequency of mutations at each individual site for each of the gene segments
-_log.txt which contains the distirubtion of mutations per read and the average entropy per gene segment
-_motif.fa a fasta file with 10 bases either side of each mutation
-_read.txt the per read position mutation count and average quality
+<p><ul>
+<li>out_entropy.txt which contains the frequency of mutations at each individual site for each of the gene segments</li>
+<li>out_log.txt which contains the distribution of mutations per read and the average entropy per gene segment</li>
+<li>out_motif.fa a fasta file with 10 bases either side of each mutation</li>
+<li>out_read.txt the per read position mutation count and average quality</li>
+</ul>
 </p>
 
-<p>It is also possible to provide information about the number 
+<p>It is also possible to provide information about the number of non-synonymous and synonymous mutations at each amino acid site, but to do this you need to provide a text file (e.g. CodingRegion.txt) with the information about the protein names and open reading frames, in the following tab delimited format:</p>
+<pre><code>
+Protein	Beg	End	Reference
+PB2	28	2307	PB2_Influenza
+PB1	25	2301	PB1_Influenza
+PB1-F2	119	391	PB1_Influenza
+PA	25	2176	PA_Influenza
+PA-X_A	25	596	PA_Influenza
+PA-X_B	598	784	PA_Influenza
+</code></pre>
+
+<p>The first column corresponds to the protein name, the names in this column must be unique, the second column corresponds to the start of the orf for that protein, the third is the end of the orf for the protein and the fourth corresponds to the identifier (name) of the reference in your reference file from which the protein is transcribed. Run the command:</p>
+
+<pre><code>$ perl btcutils.pl -bam path/to/input.bam -ref path/to/reference.fasta -orfs CodingRegions.txt -stub out
+</code></pre>
+
+<p>The latter command produces all of the previous 4 files with an additional out_AA.txt with the information about the non-synonymous, synonymous and stop-codons.</p>
 
 <h3>
 <a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
