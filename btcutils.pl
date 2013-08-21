@@ -13,6 +13,7 @@ use strict;
 use Getopt::Long; 
 use Bio::DB::Sam;
 use Math::CDF;
+use Bio::SeqIO;
 
 # global variables
 my ($bam, $ref,$help, $out,%basefreq,%refbase,$i,%cumulqual,$orfs,%readinfo,%IUPAC,%c2p,%aafreq,%aaorder,%readmis);
@@ -42,6 +43,19 @@ if (($help)&&!($help)||!($bam)||!($ref)){
 # open an output file with the motif upstream and downstream of a mismatch
 open(MOTIF,">$stub\_motif.fa")||die "Can't open output $stub\_motif.fa\n";
 open(LOG,">$stub\_log.txt")||die "Can't open output $stub\_log.txt\n";
+
+# get a hash of the reference sequences with gene, site, refbase
+my %refseq;
+my $seq_in  = Bio::SeqIO->new(-format => 'fasta',-file   => $ref);
+while( my $seq = $seq_in->next_seq() ) {
+  my $id=$seq->display_id();
+  my $seq_str=$seq->seq();
+  my @refbases=split(//,$seq_str);
+  for (my $i=0; $i<scalar(@refbases); $i++){
+    my $site=1+$i;
+    $refseq{$id}{$site}=$refbases[$i];
+  }
+}
 
 # high level API
 my $sam = Bio::DB::Sam->new(-bam  => $bam,
@@ -299,11 +313,14 @@ open (OUT, ">$stub\_entropy.txt")||die "can't open $stub\_entropy.txt\n";
 # CntTv\tCntTs\tOrderATCG
 
 print OUT "Sample\tChr\tPosition\tRefBase\tCoverage\tAvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tNonRefCnt\tCntTv\tCntTs\tOrderOfNucs\n";
-foreach my $gene (keys %{$basefreq{$bam}}){
+#foreach my $gene (keys %{$basefreq{$bam}}){
+foreach my $gene (keys %refseq){
   my $nbsites=0;
   my $sumentropy=0;
   my $rawsumentropy=0;
-  foreach my $site (sort {$a<=>$b} keys %{$basefreq{$bam}{$gene}}){
+  #foreach my $site (sort {$a<=>$b} keys %{$basefreq{$bam}{$gene}}){
+  foreach my $site (sort {$a<=>$b} keys %{$refseq{$gene}}){
+    if (keys %{$basefreq{$bam}{$gene}{$site}}){# if there is information in the bam file about this site
     my ($cntA,$cntC,$cntT,$cntG);
 	if ($basefreq{$bam}{$gene}{$site}{"A"}){ $cntA = $basefreq{$bam}{$gene}{$site}{"A"}}else{$cntA=0}
 	if ($basefreq{$bam}{$gene}{$site}{"C"}){ $cntC = $basefreq{$bam}{$gene}{$site}{"C"}}else{$cntC=0}
@@ -340,6 +357,10 @@ foreach my $gene (keys %{$basefreq{$bam}}){
     #print "$site $refbase $NucOrder\n";	 
 	print OUT "$bam\t$gene\t$site\t$refbase\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
 	print OUT "$shannon{$bam}{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\n";
+	}else{#there is no coverage for that site in the bam
+	print OUT "$bam\t$gene\t$site\t$refseq{$gene}{$site}\t0\t\t\t\t\t\t\t\t\t\t";
+	print OUT "\t\t\t\t\n";
+	}
   }
   print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
 }
