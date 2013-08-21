@@ -8,6 +8,7 @@
 # AvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tentropy(base 2)\tsimpson\tNonRefCnt
 # CntTv\tCntTs\tCodonPos\tCntNonSyn\tCntSyn\tOrderATCG
 # example command: ./btcutils -bam SamTestFiles/S1_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -stub out
+# perl btcutils.pl -bam SamTestFiles/S1_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -stub out
 use strict;
 use Getopt::Long; 
 use Bio::DB::Sam;
@@ -152,7 +153,7 @@ foreach my $target (@targets){
 	my $query_dna = $a->query->dna; # query sequence bases
 	my @scores    = $a->qscore;     # per-base quality scores
 	my $match_qual= $a->qual;       # quality of the match
-
+    my $mismatches=0;
 	#print "Ref $start Cigar $cigar $ref_dna $query_dna\n";
 	if ($cigar=~/I|D|N|S|H|P|X/){
 	  $ins_cnt++;
@@ -167,7 +168,6 @@ foreach my $target (@targets){
 	  my @refbases=split(//,$ref_dna);
 	  my $cumP=0;
 	  my $matches=0;
-	  my $mismatches=0;
 	  for ($i=0; $i<scalar(@bases); $i++){
 		# chromosome site nuc 
 		my $site=$i+$start;
@@ -219,7 +219,7 @@ foreach my $target (@targets){
 			  }
 		  }
 		}
-		$readmis{$mismatches}++;
+		
 		# create a hash for the codon and aa information only if information on start and stop are given
 		if ($orfs){
 		  #$codreg{Chr name}{ProteinName}{"Beg"}
@@ -277,7 +277,9 @@ foreach my $target (@targets){
 		}
 	  }
 	}
-	}#close the if Ns
+	$readmis{$mismatches}++;
+	}#close the if no bad cigars
+	
  }
 }
 print LOG "$bam:\nNumber of reads with inserts: $ins_cnt\nNumber of reads with Ns: $Ncnt\nNumber of sequence used: $nocigs_cnt\n";
