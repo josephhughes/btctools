@@ -54,7 +54,6 @@ public class RuntimeDemo3 {
          String line;
          BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
          while ((line = input.readLine()) != null) {
-           // print out the perl STDOUT
            System.out.println(line);
          }
          input.close();
