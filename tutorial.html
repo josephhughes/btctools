@@ -51,6 +51,7 @@
 </ul>
 </p>
 
+<h2>out_entropy.txt file</h2>
 <p>out_entropy.txt contains the following columns:
 <ul>
 <li>Sample: the name of the bam file that has been run</li>
@@ -70,6 +71,7 @@
 </ul>
 </p>
 
+<h2>out_log.txt file</h2>
 <p>out_log.txt contains summary statistics from the alignment:
 <ul>
 <li>Number of reads with inserts: reads with insertions or deletions are excluded from all the btc output files</li>
@@ -80,6 +82,7 @@
 </ul>
 </p>
 
+<h2>out_read.txt file</h2>
 <p>out_read.txt contains information about mismatches per read postion which can be used to determine whether harsher trimming is required. This table assumes that you have 
 the same number of bases in each reads, if not the results may be irrelevant as there will be different coverage for each site of the reads:
 <ul>
@@ -93,6 +96,9 @@ the same number of bases in each reads, if not the results may be irrelevant as 
 <li>AvQualNonRef: the average base-calling probability for frequency for nucleotides different to the reference</li>
 </ul>
 </p>
+
+<h3>
+<a name="btcutils" class="anchor" href="#btcutils"><span class="octicon octicon-link"></span></a>btcutils with ORFs</h3>
 
 
 <p>It is also possible to provide information about the number of non-synonymous and synonymous mutations at each amino acid site, but to do this you need to provide a text file (e.g. CodingRegion.txt) with the information about the protein names and open reading frames, in the following tab delimited format:</p>
@@ -112,6 +118,32 @@ PA-X_B	598	784	PA_Influenza
 </code></pre>
 
 <p>The latter command produces all of the previous 4 files with an additional out_AA.txt with the information about the non-synonymous, synonymous and stop-codons.</p>
+
+<h2>out_AA.txt file</h2>
+<p>out_AA.txt contains information about the codons and amino acids at each site of the coding regions for each protein. The file contains the following columns:
+<ul>
+<li>Sample: name of the sample bam file</li>
+<li>Chr: name of the chromosome or gene based on the reference used for the alignment</li>
+<li>Protein: name of the protein based on the first column of the coding region information file (e.g., CodingRegion.txt)</li>
+<li>AAPosition: the amino acid position from start position of the protein</li>
+<li>RefAA: the reference amino acid</li>
+<li>RefSite: the reference position for the first codon position</li>
+<li>RefCodon: the reference codon</li>
+<li>FstCodonPos: the number of mutations in the first codon position</li>
+<li>SndCodonPos: the number of mutations in the second codon position</li>
+<li>TrdCodonPos: the number of mutations in the third codon position</li>
+<li>CntNonSyn: the number of non synonymous changes at the amino acid site</li>
+<li>CntSyn: the number of synonymous changes at the amino acid site</li>
+<li>NbStop: the number of stop codons at this amino acid site</li>
+<li>TopAA: the top (most frequently  found) amino acid (usually the reference amino acid)</li>
+<li>TopAAcnt: the number of times this amino acid was found</li>
+<li>SndAA: the second most frequently found amino acid</li>
+<li>SndAAcnt: the number of times this amino acid was found</li>
+<li>TrdAA: the third most frequent amino acid (this could go on for ever ...)</li>
+<li>TrdAAcnt: the number of times the third most frequent amino acid was found</li>
+<li>AAcoverage: the amino acid coverage which may be a bit lower than the nucleotide coverage as it only takes into account full codons</li>
+</ul>
+</p>
 
 <h3>
 <a name="btcmerge" class="anchor" href="#btcmerge"><span class="octicon octicon-link"></span></a>btcmerge</h3>
