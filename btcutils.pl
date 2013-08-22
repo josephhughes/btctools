@@ -141,9 +141,10 @@ if ($orfs){
       }
     }
 }
-
+my $increment;
 foreach my $target (@targets){
   print "\n$target\n";
+  $increment=0;
   my @alignments = $sam->get_features_by_location(-seq_id => $target);
   my $refobj = $sam->segment(-seq_id => $target);
   my $refseq = $refobj->dna;
@@ -450,10 +451,16 @@ sub log_base {
 
 sub progress_bar {
     my ( $got, $total, $width, $char ) = @_;
+    if ($got/$total>=$increment){
     $width ||= 25;
     $char  ||= '=';
     my $num_width = length $total;
     local $| = 1;
-    printf "|%-${width}s| Processed %${num_width}s reads of %s (%.2f%%)\r", 
-        $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/+$total;
+    $increment=$increment+0.05;
+#     printf "|%-${width}s| Processed %${num_width}s reads of %s (%.2f%%)\r", 
+#         $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/+$total;
+    printf "|%-${width}s| Processed %.2f%% of reads out of %s\r", 
+        $char x (($width+1)*$got/$total). '>', 100*$increment, $total;
+
+    }    
 }
