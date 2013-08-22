@@ -51,6 +51,50 @@
 </ul>
 </p>
 
+<p>out_entropy.txt contains the following columns:
+<ul>
+<li>Sample: the name of the bam file that has been run</li>
+<li>Chr: the gene or chromosome identifier from the reference used for the mapping</li>
+<li>Position: the site/position of alignment in the reference<li>
+<li>RefBase: the base of the reference sequence at that position<li>
+<li>Coverage: the coverage, i.e. number of reads mapping at that position<li>
+<li>AvQual: the average base-calling error probability which is related to the Phred quality score</li>
+<li>Acnt: the total number of A nucleotides at that position</li>
+<li>Apval: average probability of sequencing error for that nucleotide based on quality scores</li>
+<li>The values for Ccnt, Cpval, Tcnt, Tpval, Gcnt, Gpval are also listed</li>
+<li>entropy(base e): a measure of uncertainty in the dataset used as a means to quantify sequence variability at that particular site</li>
+<li>NonRefCnt: the number of reads that have bases different to the reference</li>
+<li>CntTv: the total number of transversions at that site</li>
+<li>CntTs: the total number of transitions at that sites</li>
+<li>OrderOfNucs: the order of the nucleotides based on each nucleotide count</li>
+</ul>
+</p>
+
+<p>out_log.txt contains summary statistics from the alignment:
+<ul>
+<li>Number of reads with inserts: reads with insertions or deletions are excluded from all the btc output files</li>
+<li>Number of reads with Ns: these are also excluded from analyses</li>
+<li>Number of sequence used: this provides the total number of reads used for generating the btc files</li>
+<li>Frequency of mismatches per read (mismatches: number of reads): this provides a distribution of the number of mismatches found per read</li>
+<li>Gene Average entropy: the average entropy for each of the genes in the dataset is provided</li>
+</ul>
+</p>
+
+<p>out_read.txt contains information about mismatches per read postion which can be used to determine whether harsher trimming is required. This table assumes that you have 
+the same number of bases in each reads, if not the results may be irrelevant as there will be different coverage for each site of the reads:
+<ul>
+<li>ReadPos: the position in the read (e.g., 1 to 150)</li>
+<li>CntRef: number of bases matching the reference at this position</li>
+<li>CntNonRef: number of bases not matching the reference at that position in the read</li>
+<li>TotalCnt: total number of bases (ref + nonref)</li>
+<li>Freq: frequency of mismatches at this read position</li>
+<li>AvQual: the average base-calling error probability for that position in a read</li>
+<li>AvQualRef: the average base-calling probability for nucleotides matching the reference</li>
+<li>AvQualNonRef: the average base-calling probability for frequency for nucleotides different to the reference</li>
+</ul>
+</p>
+
+
 <p>It is also possible to provide information about the number of non-synonymous and synonymous mutations at each amino acid site, but to do this you need to provide a text file (e.g. CodingRegion.txt) with the information about the protein names and open reading frames, in the following tab delimited format:</p>
 <pre><code>
 Protein	Beg	End	Reference
