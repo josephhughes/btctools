@@ -34,8 +34,8 @@
         <p>Here I will try to explain how you can run the various btctools from the command-line. The core of btctools is written in perl and makes use of the the <a href="http://search.cpan.org/~lds/Bio-SamTools/">Bio-SamTools module</a> written by Lincoln D. Stein. 
         So the various perl script can be run from the command-line to automate the processing on multiple bam files.</p>
      
-<h3>
-<a name="btcutils" class="anchor" href="#btcutils"><span class="octicon octicon-link"></span></a>btcutils</h3>
+<h2>
+<a name="btcutils" class="anchor" href="#btcutils"><span class="octicon octicon-link"></span></a>btcutils</h2>
 
 <p>This script is used to generate the files that contain the frequencies of various mutations from the bam file. In the most basic form, you may just be interested in the number of SNPs at each site of your alignment. From the directory where the perl script is located:</p>
 
@@ -51,14 +51,14 @@
 </ul>
 </p>
 
-<h2>out_entropy.txt file</h2>
+<h3>out_entropy.txt file</h3>
 <p>out_entropy.txt contains the following columns:
 <ul>
 <li>Sample: the name of the bam file that has been run</li>
 <li>Chr: the gene or chromosome identifier from the reference used for the mapping</li>
-<li>Position: the site/position of alignment in the reference<li>
-<li>RefBase: the base of the reference sequence at that position<li>
-<li>Coverage: the coverage, i.e. number of reads mapping at that position<li>
+<li>Position: the site/position of alignment in the reference</li>
+<li>RefBase: the base of the reference sequence at that position</li>
+<li>Coverage: the coverage, i.e. number of reads mapping at that position</li>
 <li>AvQual: the average base-calling error probability which is related to the Phred quality score</li>
 <li>Acnt: the total number of A nucleotides at that position</li>
 <li>Apval: average probability of sequencing error for that nucleotide based on quality scores</li>
@@ -71,7 +71,7 @@
 </ul>
 </p>
 
-<h2>out_log.txt file</h2>
+<h3>out_log.txt file</h3>
 <p>out_log.txt contains summary statistics from the alignment:
 <ul>
 <li>Number of reads with inserts: reads with insertions or deletions are excluded from all the btc output files</li>
@@ -82,7 +82,7 @@
 </ul>
 </p>
 
-<h2>out_read.txt file</h2>
+<h3>out_read.txt file</h3>
 <p>out_read.txt contains information about mismatches per read postion which can be used to determine whether harsher trimming is required. This table assumes that you have 
 the same number of bases in each reads, if not the results may be irrelevant as there will be different coverage for each site of the reads:
 <ul>
@@ -97,8 +97,8 @@ the same number of bases in each reads, if not the results may be irrelevant as 
 </ul>
 </p>
 
-<h3>
-<a name="btcutils" class="anchor" href="#btcutils"><span class="octicon octicon-link"></span></a>btcutils with ORFs</h3>
+<h2>
+<a name="btcutils" class="anchor" href="#btcutils"><span class="octicon octicon-link"></span></a>btcutils with ORFs</h2>
 
 
 <p>It is also possible to provide information about the number of non-synonymous and synonymous mutations at each amino acid site, but to do this you need to provide a text file (e.g. CodingRegion.txt) with the information about the protein names and open reading frames, in the following tab delimited format:</p>
@@ -119,7 +119,7 @@ PA-X_B	598	784	PA_Influenza
 
 <p>The latter command produces all of the previous 4 files with an additional out_AA.txt with the information about the non-synonymous, synonymous and stop-codons.</p>
 
-<h2>out_AA.txt file</h2>
+<h3>out_AA.txt file</h3>
 <p>out_AA.txt contains information about the codons and amino acids at each site of the coding regions for each protein. The file contains the following columns:
 <ul>
 <li>Sample: name of the sample bam file</li>
@@ -145,8 +145,8 @@ PA-X_B	598	784	PA_Influenza
 </ul>
 </p>
 
-<h3>
-<a name="btcmerge" class="anchor" href="#btcmerge"><span class="octicon octicon-link"></span></a>btcmerge</h3>
+<h2>
+<a name="btcmerge" class="anchor" href="#btcmerge"><span class="octicon octicon-link"></span></a>btcmerge</h2>
 
 <p>Once you have produced multiple btc files, you may want to merge several, either to compare the results from independent replicates, or to compare the intra-host diversity from different individuals, or even to compare closely related viruses in the same or different individuals.</p>
 
