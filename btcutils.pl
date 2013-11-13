@@ -141,9 +141,10 @@ if ($orfs){
       }
     }
 }
-
+my $increment;
 foreach my $target (@targets){
   print "\n$target\n";
+  $increment=0;
   my @alignments = $sam->get_features_by_location(-seq_id => $target);
   my $refobj = $sam->segment(-seq_id => $target);
   my $refseq = $refobj->dna;
@@ -366,6 +367,7 @@ foreach my $gene (keys %refseq){
 		}else{
 		  $baseprob{"G"}=1;
 		}
+
 	    
 		if ($coverage>0){
 		  foreach my $nuc (keys %{$basefreq{$bam}{$gene}{$site}}){
@@ -391,6 +393,25 @@ foreach my $gene (keys %refseq){
 	}else{#there is no coverage for that site in the bam
 		print OUT "$bam\t$gene\t$site\t$refseq{$gene}{$site}\t0\t\t\t\t\t\t\t\t\t\t";
 		print OUT "\t\t\t\t\n";
+
+	  }   
+	}   
+	$nbsites++;
+	$sumentropy=$sumentropy+$shannon{$bam}{$gene}{$site};
+	my $refbase=$refbase{$bam}{$gene}{$site};
+	my $nonrefcnt=$coverage-($basefreq{$bam}{$gene}{$site}{$refbase});
+	my ($Ts,$Tv) = cntTsTv($refbase,$cntA,$cntT,$cntG,$cntC);
+    my $NucOrder="";
+    foreach my $nuc (sort { $basefreq{$bam}{$gene}{$site}{$b} <=> $basefreq{$bam}{$gene}{$site}{$a} } keys %{$basefreq{$bam}{$gene}{$site}}) {
+        $NucOrder=$NucOrder.$nuc;
+    }
+    #print "$site $refbase $NucOrder\n";	 
+	print OUT "$bam\t$gene\t$site\t".uc($refbase)."\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
+	print OUT "$shannon{$bam}{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\n";
+	}else{#there is no coverage for that site in the bam
+	print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\t\t\t\t\t\t\t\t\t\t";
+	print OUT "\t\t\t\t\n";
+
 	}
   }
   print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
@@ -481,10 +502,16 @@ sub log_base {
 
 sub progress_bar {
     my ( $got, $total, $width, $char ) = @_;
+    if ($got/$total>=$increment){
     $width ||= 25;
     $char  ||= '=';
     my $num_width = length $total;
     local $| = 1;
-    printf "|%-${width}s| Processed %${num_width}s reads of %s (%.2f%%)\r", 
-        $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/+$total;
+    $increment=$increment+0.05;
+#     printf "|%-${width}s| Processed %${num_width}s reads of %s (%.2f%%)\r", 
+#         $char x (($width-1)*$got/$total). '>', $got, $total, 100*$got/+$total;
+    printf "|%-${width}s| Processed %.2f%% of reads out of %s\r", 
+        $char x (($width+1)*$got/$total). '>', 100*$increment, $total;
+
+    }    
 }

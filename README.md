@@ -44,11 +44,11 @@ Use table 1 to calculate and plot:
 
   1. Sequence error estimates => Mutation spectrum = plot distribution of frequency estimates (figure)
 
-  2. GC content versus coverage plot (add reference base in table)
+  2. GC content versus coverage plot (add reference base in table) =>DONE
 
-  3. Per site entropy => plot entropy along each gene and plot sliding window of entropy (figure)
+  3. Per site entropy => plot entropy along each gene and plot sliding window of entropy (figure)=>DONE
   
-  4. Per site coverage
+  4. Per site coverage=>DONE
 
 Use table 2:
 
