@@ -14,6 +14,7 @@ use Bio::SeqIO;
 # example:
 # perl btcmerge.pl -files 1351_LPAIH7N1,test -out refalign -refalign SamTestFiles/HA.fa,SamTestFiles/NA.fa,SamTestFiles/M.fa,SamTestFiles/NS.fa,SamTestFiles/PA.fa,SamTestFiles/PB1.fa,SamTestFiles/PB2.fa,SamTestFiles/NP.fa 
 
+
 my ($files,$out,$refalign,%ref,%nuccnt,%refseq,%genes,%aatable);
 my $reps;
 # add argument to specify whether two files are technical replicates
@@ -204,6 +205,14 @@ if(!$refalign){
     print "Expecting two or more input files\n";
   }
 }elsif($refalign){
+# try the following approach
+# open the reference alignments. Map alignment position to original reference position for each gene/chr (same as input tables), if the alignment position is a gap, then don't put anything in the hash (or put a -)
+# open each input table and put gene and reference position into a hash.
+# then go through every position of the alignment mapping hash and if the hash value exists then
+# check what the corresponding values are in the table hash.
+# if the hash value doesn't exist, then put NAs in that row.
+
+
   my (%nuctable,@colnames,%aatable,@aacolnames,%sharedref,%proteins);
   open(OUT,">$out\_realign.txt")||die "Can't open $out\_realign.txt\n";
   open(AAOUT,">$out\_AA_realign.txt")||die "Can't open $out\_AA_realign.txt\n";
@@ -219,7 +228,7 @@ if(!$refalign){
 	  my @values=split(/\t/,$_);
 	  for (my $i=1; $i<scalar(@values);$i++){
 	    #print "$values[1] $file $values[2]\n";
-	    $nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]}=$values[$i];
+	    $nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]}=$values[$i];#In NUCLEOTIDE FILE chr position samplename columnname and data
 	    #print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
 	    $sharedref{$values[1]}{$file}++;
 	  }
@@ -237,7 +246,7 @@ if(!$refalign){
 	    # Chr	Protein	AAPosition	RefAA	RefSite	RefCodon	FstCodonPos	SndCodonPos	TrdCodonPos	CntNonSyn	CntSyn	NbStop	TopAA	TopAAcnt	SndAA	SndAAcnt	TrdAA	TrdAAcnt	AAcoverage
 	    #print "$values[1] $file $values[2]\n";
 	    # listed all files that have same chr, protein, refsite 
-	    $aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
+	    $aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#IN AATABLE Chr Protein RefSite samplename columname and data
 	    #print "$aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]} $values[2] $values[3] $file $aacolnames[$j]\n";
 	    $proteins{$values[1]}{$values[2]}++;
 	  }
@@ -304,6 +313,8 @@ if(!$refalign){
         print OUT "$id\t";
         my $site=$refseq{$gene}{$alnpos}{$id}{"site"};
         my $base=$refseq{$gene}{$alnpos}{$id}{"base"};
+        
+        
         #print "$nuctable{$id}{$site}{$sample}{$colnames[$j]}\t"; 
         if ($refseq{$gene}{$alnpos}{$id}{"base"}=~/-/){
           #print OUT "NA\tNA\t";
@@ -356,6 +367,7 @@ if(!$refalign){
         }
       }
       print OUT "\n";
+      
     }
   }
   foreach my $prot (keys %newaatable){
