@@ -15,7 +15,7 @@ use Bio::SeqIO;
 # perl btcmerge.pl -files 1351_LPAIH7N1,test -out refalign -refalign SamTestFiles/HA.fa,SamTestFiles/NA.fa,SamTestFiles/M.fa,SamTestFiles/NS.fa,SamTestFiles/PA.fa,SamTestFiles/PB1.fa,SamTestFiles/PB2.fa,SamTestFiles/NP.fa 
 
 
-my ($files,$out,$refalign,%ref,%nuccnt,%refseq,%genes,%aatable);
+my ($files,$out,$refalign,%ref,%nuccnt,%refseq,%genes);
 my $reps;
 # add argument to specify whether two files are technical replicates
 &GetOptions(
@@ -213,25 +213,20 @@ if(!$refalign){
 # if the hash value doesn't exist, then put NAs in that row.
 
 
-  my (%nuctable,@colnames,%aatable,@aacolnames,%sharedref,%proteins);
-  open(OUT,">$out\_realign.txt")||die "Can't open $out\_realign.txt\n";
-  open(AAOUT,">$out\_AA_realign.txt")||die "Can't open $out\_AA_realign.txt\n";
-  print OUT "Chr\tAlignPos\t";
-  #print AAOUT "Protein\tAlignPos\t";
+  my (%nuctable,%aatable,%newnuc,%newaa,@aacolnames,@colnames,%gappos,%sharedref);
   foreach my $file (@files){
     open (FILE,"<$file\_entropy.txt")|| die "Can't open $file\_entropy.txt\n";
     my $header=<FILE>;
     chomp($header);
+    # Sample	Chr	Position	RefBase	Coverage	AvQual	Acnt	Apval	Ccnt	Cpval	Tcnt	Tpval	Gcnt	Gpval	entropy(base e)	NonRefCnt	CntTv	CntTs	OrderOfNucs
     @colnames=split(/\t/,$header);
     while(<FILE>){
 	  chomp($_);
+	  my $str=$_;
+	  $str =~ s/\s+$//;
 	  my @values=split(/\t/,$_);
-	  for (my $i=1; $i<scalar(@values);$i++){
-	    #print "$values[1] $file $values[2]\n";
-	    $nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]}=$values[$i];#In NUCLEOTIDE FILE chr position samplename columnname and data
-	    #print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
-	    $sharedref{$values[1]}{$file}++;
-	  }
+	  $sharedref{$values[1]}{$file}++;
+	  $nuctable{$file}{$values[1]}{$values[2]}=$str;#In NUCLEOTIDE FILE chr position samplename columnname and data
     }
     open (AAFILE,"<$file\_AA.txt")|| die "Can't open $file\_AA.txt\n";
     print "$file\_AA.txt\n";
@@ -241,21 +236,15 @@ if(!$refalign){
     @aacolnames=split(/\t/,$aaheader);
     while(<AAFILE>){
 	  chomp($_);
+	  my $str=$_;
+	  $str =~ s/\s+$//;
 	  my @values=split(/\t/,$_);
-	  for (my $j=1; $j<scalar(@values);$j++){
-	    # Chr	Protein	AAPosition	RefAA	RefSite	RefCodon	FstCodonPos	SndCodonPos	TrdCodonPos	CntNonSyn	CntSyn	NbStop	TopAA	TopAAcnt	SndAA	SndAAcnt	TrdAA	TrdAAcnt	AAcoverage
-	    #print "$values[1] $file $values[2]\n";
-	    # listed all files that have same chr, protein, refsite 
-	    $aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#IN AATABLE Chr Protein RefSite samplename columname and data
-	    #print "$aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]} $values[2] $values[3] $file $aacolnames[$j]\n";
-	    $proteins{$values[1]}{$values[2]}++;
-	  }
+	  # Sample	Chr	Protein	AAPosition	RefAA	RefSite	RefCodon	FstCodonPos	SndCodonPos	TrdCodonPos	CntNonSyn	CntSyn	NbStop	TopAA	TopAAcnt	SndAA	SndAAcnt	TrdAA	TrdAAcnt	AAcoverage
+	  $aatable{$file}{$values[1]}{$values[5]}=$str;#IN AATABLE Chr Protein RefSite samplename columname and data
     }
     close(FILE);
     close(AAFILE);
   }
-  #read in the alignment
-  my (%genes,%gappos,%newtable);
   my @alignments=split(/,/,$refalign);# all the different gene alignments
   foreach my $alignment (@alignments){
     my $seq_in  = Bio::SeqIO->new(-format => 'fasta',-file   => $alignment);
@@ -276,116 +265,222 @@ if(!$refalign){
 	    $refseq{$alignment}{$alnpos}{$id}{"site"}=$alnpos-$gapcnt;# from the alignment position get the real position
 	    $refseq{$alignment}{$alnpos}{$id}{"base"}=$bases[$i];
 	    $gappos{$id}{$alnpos-$gapcnt}=$bases[$i];
+	    foreach my $file (keys %{$sharedref{$id}}){
+	      if ($bases[$i]=~/-/){
+            $newnuc{$alignment}{$alnpos}{$file}="$file\t$id\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA";
+            print "$alignment\t$id\t$bases[$i]\t$alnpos\t$gapcnt => NA\n";
+	      }elsif($bases[$i]!~/-/ && ($alnpos-$gapcnt)>0){
+            if ($nuctable{$file}{$id}{($alnpos-$gapcnt)}=~/\w+/){
+              $newnuc{$alignment}{$alnpos}{$file}=$nuctable{$file}{$id}{($alnpos-$gapcnt)};
+            }else{
+              $newnuc{$alignment}{$alnpos}{$file}="$file\t$id\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA";
+            }
+            print "Populate\t$bases[$i]\t$id\t$alnpos\t$gapcnt\t\t".($alnpos-$gapcnt).">>>>>>>>>>>>$nuctable{$file}{$id}{($alnpos-$gapcnt)}\n";
+	      }elsif(($alnpos-$gapcnt)<1){
+	        print "Doesn't exist".$alnpos-$gapcnt."\n";
+	      }
+	    }
 	  }
 	}
   }
-  foreach my $id (keys %{$genes{$alignments[0]}}){
-    print OUT "Gene\t";
-    foreach my $sample (keys %{$sharedref{$id}}){
-      for (my $j=2; $j<scalar(@colnames);$j++){
-        print OUT "$sample\_$colnames[$j]\t";
-      }
+  open(OUT,">$out\_realign.txt")||die "Can't open $out\_realign.txt\n";
+  print OUT "Alignment\tAlignPos\t";
+  foreach my $file (@files){
+    for (my $j=0; $j<scalar(@colnames);$j++){
+      print OUT "$file\_$colnames[$j]\t";
     }
   }
   print OUT "\n";
-  # need to repeat the above for each protein
-  # listed all files that have same chr, protein, refsite 
-  #$aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
-  print AAOUT "AlignmentPosition\t";
-  foreach my $id (keys %{$genes{$alignments[0]}}){
-    
-    foreach my $sample (keys %{$sharedref{$id}}){
-      for (my $j=1; $j<scalar(@aacolnames);$j++){
-        print AAOUT "$sample\_$aacolnames[$j]\t";
-      }
-    }
-  }
-  #foreach protein, I need the different chromosome ids that correspond to it
-  #from these different chromosome ids, I can get the different samples
-  #from these samples I can check whether the site corresponds to  
-  print AAOUT "\n";
 
-  my (%alnpos, %gapcnt,%newaatable);
-  foreach my $gene (keys %refseq){
-    foreach my $alnpos (sort {$a<=>$b} keys %{$refseq{$gene}}){
-      print OUT "$gene\t$alnpos\t";
-      foreach my $id (keys %{$genes{$gene}}){    
-        print OUT "$id\t";
-        my $site=$refseq{$gene}{$alnpos}{$id}{"site"};
-        my $base=$refseq{$gene}{$alnpos}{$id}{"base"};
-        
-        
-        #print "$nuctable{$id}{$site}{$sample}{$colnames[$j]}\t"; 
-        if ($refseq{$gene}{$alnpos}{$id}{"base"}=~/-/){
-          #print OUT "NA\tNA\t";
-          foreach my $prot (keys %{$proteins{$id}}){
-            $gapcnt{$prot}{$id}++;
-            #$alnpos{$prot}{$id}{$alnpos}="NA";
-          
-	       my $refsite = $alnpos-$gapcnt{$prot}{$id};
-           if (keys %{$aatable{$id}{$prot}{$refsite}}){
-             #$alnpos{$prot}{$id}{$alnpos}=$alnpos-$gapcnt{$prot}{$id};
-             foreach my $sample (keys %{$aatable{$id}{$prot}{$refsite}}){
-               print "$prot $id $alnpos $sample $refsite\n";
-               for (my $j=1; $j<scalar(@aacolnames);$j++){
-                 $newaatable{$prot}{$id}{$alnpos}{$sample}{$aacolnames[$j]}=$aatable{$id}{$prot}{$refsite}{$sample}{$aacolnames[$j]};
-                 
-               }
-             }
-           }
-		  }
-          foreach my $sample (keys %{$sharedref{$id}}){
-            for (my $j=2; $j<scalar(@colnames);$j++){
-              print OUT "NA\t";
-            }
-          }
-        }else{    
-         # print OUT "$site\t$base\t";
-         foreach my $prot (keys %{$proteins{$id}}){ 
-           #perhaps only add it in the hash if it is the first codon position of an aa (i.e. in the coding region) 
-           # listed all files that have same chr, protein, refsite 
-	       #$aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
-	       my $refsite = $alnpos-$gapcnt{$prot}{$id};
-           if (keys %{$aatable{$id}{$prot}{$refsite}}){
-             #$alnpos{$prot}{$id}{$alnpos}=$alnpos-$gapcnt{$prot}{$id};
-             foreach my $sample (keys %{$aatable{$id}{$prot}{$refsite}}){
-               for (my $j=1; $j<scalar(@aacolnames);$j++){
-                 $newaatable{$prot}{$alnpos}{$id}{$sample}{$aacolnames[$j]}=$aatable{$id}{$prot}{$refsite}{$sample}{$aacolnames[$j]};
-               }
-             }
-           }
-         }
-          foreach my $sample (keys %{$sharedref{$id}}){
-            for (my $j=2; $j<scalar(@colnames);$j++){
-              if ($nuctable{$id}{$site}{$sample}{$colnames[$j]}=~/./){
-                print OUT "$nuctable{$id}{$site}{$sample}{$colnames[$j]}\t";
-              }else{
-                print OUT "NA\t";
-              }
-            }
-          } 
-        }
+  for my $alignment (keys %newnuc){
+    for my $alnpos (sort {$a<=>$b} keys %{$newnuc{$alignment}}){
+      print OUT "$alignment\t$alnpos\t";
+      foreach my $file (@files){
+        print OUT ">$newnuc{$alignment}{$alnpos}{$file}<\t";
       }
       print OUT "\n";
-      
     }
   }
-  foreach my $prot (keys %newaatable){
-    foreach my $alnpos (sort {$a<=>$b} keys %{$newaatable{$prot}}){
-      foreach my $id (keys %{$newaatable{$prot}{$alnpos}}){
-        #print AAOUT "$prot\t$id\t$alnpos\t";
-        print AAOUT "$alnpos\t";
-        foreach my $sample (keys %{$newaatable{$prot}{$alnpos}{$id}}){
-          for (my $j=1; $j<scalar(@aacolnames);$j++){
-          
-            #print "$sample ";
-            print AAOUT "$newaatable{$prot}{$alnpos}{$id}{$sample}{$aacolnames[$j]}\t";
-          }
-        }
-      }
-       print AAOUT "\n";
-    }
-  }
+# from the aa refsite position, check what the corresponding alignment position in the newnuc
+# put this in a %newaa
+# go through every alignment position of the %newaa and if empty for a particular file, add NAs
+
+
+
+
+#   my (%nuctable,@colnames,%aatable,@aacolnames,%sharedref,%proteins);
+#   open(OUT,">$out\_realign.txt")||die "Can't open $out\_realign.txt\n";
+#   open(AAOUT,">$out\_AA_realign.txt")||die "Can't open $out\_AA_realign.txt\n";
+#   print OUT "Chr\tAlignPos\t";
+#   #print AAOUT "Protein\tAlignPos\t";
+#   foreach my $file (@files){
+#     open (FILE,"<$file\_entropy.txt")|| die "Can't open $file\_entropy.txt\n";
+#     my $header=<FILE>;
+#     chomp($header);
+#     @colnames=split(/\t/,$header);
+#     while(<FILE>){
+# 	  chomp($_);
+# 	  my @values=split(/\t/,$_);
+# 	  for (my $i=1; $i<scalar(@values);$i++){
+# 	    #print "$values[1] $file $values[2]\n";
+# 	    $nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]}=$values[$i];#In NUCLEOTIDE FILE chr position samplename columnname and data
+# 	    #print "$nuctable{$values[1]}{$values[2]}{$file}{$colnames[$i]} $values[1] $values[2] $file $colnames[$i]\n";
+# 	    $sharedref{$values[1]}{$file}++;
+# 	  }
+#     }
+#     open (AAFILE,"<$file\_AA.txt")|| die "Can't open $file\_AA.txt\n";
+#     print "$file\_AA.txt\n";
+#     my $aaheader=<AAFILE>;
+#     print "$aaheader\n";
+#     chomp($aaheader);
+#     @aacolnames=split(/\t/,$aaheader);
+#     while(<AAFILE>){
+# 	  chomp($_);
+# 	  my @values=split(/\t/,$_);
+# 	  for (my $j=1; $j<scalar(@values);$j++){
+# 	    # Chr	Protein	AAPosition	RefAA	RefSite	RefCodon	FstCodonPos	SndCodonPos	TrdCodonPos	CntNonSyn	CntSyn	NbStop	TopAA	TopAAcnt	SndAA	SndAAcnt	TrdAA	TrdAAcnt	AAcoverage
+# 	    #print "$values[1] $file $values[2]\n";
+# 	    # listed all files that have same chr, protein, refsite 
+# 	    $aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#IN AATABLE Chr Protein RefSite samplename columname and data
+# 	    #print "$aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]} $values[2] $values[3] $file $aacolnames[$j]\n";
+# 	    $proteins{$values[1]}{$values[2]}++;
+# 	  }
+#     }
+#     close(FILE);
+#     close(AAFILE);
+#   }
+#   #read in the alignment
+#   my (%genes,%gappos,%newtable);
+#   my @alignments=split(/,/,$refalign);# all the different gene alignments
+#   foreach my $alignment (@alignments){
+#     my $seq_in  = Bio::SeqIO->new(-format => 'fasta',-file   => $alignment);
+# 	while( my $seq = $seq_in->next_seq() ) {
+# 	  my $id=$seq->display_id();
+# 	  push (@seqids,$id);
+# 	  my $seq_str=$seq->seq();
+# 	  $sequences{$id}=$seq_str;
+# 	  $length{$alignment}=length($seq_str);
+# 	  $genes{$alignment}{$id}++;
+# 	  my $gapcnt=0;
+# 	  my @bases = split(//,$seq_str);
+# 	  for (my $i = 0; $i<scalar(@bases); $i++){
+# 	    my $alnpos=$i+1;
+# 	    if ($bases[$i]=~/-/){
+# 	      $gapcnt++;
+# 	    }
+# 	    $refseq{$alignment}{$alnpos}{$id}{"site"}=$alnpos-$gapcnt;# from the alignment position get the real position
+# 	    $refseq{$alignment}{$alnpos}{$id}{"base"}=$bases[$i];
+# 	    $gappos{$id}{$alnpos-$gapcnt}=$bases[$i];
+# 	  }
+# 	}
+#   }
+#   foreach my $id (keys %{$genes{$alignments[0]}}){
+#     print OUT "Gene\t";
+#     foreach my $sample (keys %{$sharedref{$id}}){
+#       for (my $j=2; $j<scalar(@colnames);$j++){
+#         print OUT "$sample\_$colnames[$j]\t";
+#       }
+#     }
+#   }
+#   print OUT "\n";
+#   # need to repeat the above for each protein
+#   # listed all files that have same chr, protein, refsite 
+#   #$aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
+#   print AAOUT "AlignmentPosition\t";
+#   foreach my $id (keys %{$genes{$alignments[0]}}){
+#     
+#     foreach my $sample (keys %{$sharedref{$id}}){
+#       for (my $j=1; $j<scalar(@aacolnames);$j++){
+#         print AAOUT "$sample\_$aacolnames[$j]\t";
+#       }
+#     }
+#   }
+#   #foreach protein, I need the different chromosome ids that correspond to it
+#   #from these different chromosome ids, I can get the different samples
+#   #from these samples I can check whether the site corresponds to  
+#   print AAOUT "\n";
+# 
+#   my (%alnpos, %gapcnt,%newaatable);
+#   foreach my $gene (keys %refseq){
+#     foreach my $alnpos (sort {$a<=>$b} keys %{$refseq{$gene}}){
+#       print OUT "$gene\t$alnpos\t";
+#       foreach my $id (keys %{$genes{$gene}}){    
+#         print OUT "$id\t";
+#         my $site=$refseq{$gene}{$alnpos}{$id}{"site"};
+#         my $base=$refseq{$gene}{$alnpos}{$id}{"base"};
+#         
+#         
+#         #print "$nuctable{$id}{$site}{$sample}{$colnames[$j]}\t"; 
+#         if ($refseq{$gene}{$alnpos}{$id}{"base"}=~/-/){
+#           #print OUT "NA\tNA\t";
+#           foreach my $prot (keys %{$proteins{$id}}){
+#             $gapcnt{$prot}{$id}++;
+#             #$alnpos{$prot}{$id}{$alnpos}="NA";
+#           
+# 	       my $refsite = $alnpos-$gapcnt{$prot}{$id};
+#            if (keys %{$aatable{$id}{$prot}{$refsite}}){
+#              #$alnpos{$prot}{$id}{$alnpos}=$alnpos-$gapcnt{$prot}{$id};
+#              foreach my $sample (keys %{$aatable{$id}{$prot}{$refsite}}){
+#                print "$prot $id $alnpos $sample $refsite\n";
+#                for (my $j=1; $j<scalar(@aacolnames);$j++){
+#                  $newaatable{$prot}{$id}{$alnpos}{$sample}{$aacolnames[$j]}=$aatable{$id}{$prot}{$refsite}{$sample}{$aacolnames[$j]};
+#                  
+#                }
+#              }
+#            }
+# 		  }
+#           foreach my $sample (keys %{$sharedref{$id}}){
+#             for (my $j=2; $j<scalar(@colnames);$j++){
+#               print OUT "NA\t";
+#             }
+#           }
+#         }else{    
+#          # print OUT "$site\t$base\t";
+#          foreach my $prot (keys %{$proteins{$id}}){ 
+#            #perhaps only add it in the hash if it is the first codon position of an aa (i.e. in the coding region) 
+#            # listed all files that have same chr, protein, refsite 
+# 	       #$aatable{$values[1]}{$values[2]}{$values[5]}{$file}{$aacolnames[$j]}=$values[$j];#Chr Protein RefSite
+# 	       my $refsite = $alnpos-$gapcnt{$prot}{$id};
+#            if (keys %{$aatable{$id}{$prot}{$refsite}}){
+#              #$alnpos{$prot}{$id}{$alnpos}=$alnpos-$gapcnt{$prot}{$id};
+#              foreach my $sample (keys %{$aatable{$id}{$prot}{$refsite}}){
+#                for (my $j=1; $j<scalar(@aacolnames);$j++){
+#                  $newaatable{$prot}{$alnpos}{$id}{$sample}{$aacolnames[$j]}=$aatable{$id}{$prot}{$refsite}{$sample}{$aacolnames[$j]};
+#                }
+#              }
+#            }
+#          }
+#           foreach my $sample (keys %{$sharedref{$id}}){
+#             for (my $j=2; $j<scalar(@colnames);$j++){
+#               if ($nuctable{$id}{$site}{$sample}{$colnames[$j]}=~/./){
+#                 print OUT "$nuctable{$id}{$site}{$sample}{$colnames[$j]}\t";
+#               }else{
+#                 print OUT "NA\t";
+#               }
+#             }
+#           } 
+#         }
+#       }
+#       print OUT "\n";
+#       
+#     }
+#   }
+#   foreach my $prot (keys %newaatable){
+#     foreach my $alnpos (sort {$a<=>$b} keys %{$newaatable{$prot}}){
+#       foreach my $id (keys %{$newaatable{$prot}{$alnpos}}){
+#         #print AAOUT "$prot\t$id\t$alnpos\t";
+#         print AAOUT "$alnpos\t";
+#         foreach my $sample (keys %{$newaatable{$prot}{$alnpos}{$id}}){
+#           for (my $j=1; $j<scalar(@aacolnames);$j++){
+#           
+#             #print "$sample ";
+#             print AAOUT "$newaatable{$prot}{$alnpos}{$id}{$sample}{$aacolnames[$j]}\t";
+#           }
+#         }
+#       }
+#        print AAOUT "\n";
+#     }
+#   }
 
 }
 
