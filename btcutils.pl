@@ -16,7 +16,7 @@ use Math::CDF;
 use Bio::SeqIO;
 
 # global variables
-my ($bam, $ref,$help, $out,%basefreq,%refbase,$i,%cumulqual,%cumulbasequal,$orfs,%readinfo,%IUPAC,%c2p,%aafreq,%aaorder,%readmis);
+my ($bam, $ref,$help, $out,%basefreq,%refbase,$i,%cumulqual,$orfs,%readinfo,%IUPAC,%c2p,%aafreq,%aaorder,%readmis);
 # addition of avqual threshold, coverage threshold, pval threshold => need to re-think this
 # %readmis used to count the number of mismatches per reads
 # my $tpval=0;
@@ -195,11 +195,6 @@ foreach my $target (@targets){
 		}else{
 		  $cumulqual{$bam}{$target}{$site}=$P;
 		}
-		if ($cumulbasequal{$bam}{$target}{$site}{$bases[$i]}){
-		  $cumulbasequal{$bam}{$target}{$site}{$bases[$i]}=$cumulbasequal{$bam}{$target}{$site}{$bases[$i]}+$P;
-		}else{
-		  $cumulbasequal{$bam}{$target}{$site}{$bases[$i]}=$P;
-		}
 		# create a hash for the read information (position of mismatches relative to the start position of a read and motifs upstream and downstream of a mismatch)
 		$readinfo{$readpos}{"AvQual"}=$readinfo{$readpos}{"AvQual"}+$P;
 		if ($refbases[$i]=~/$bases[$i]/i){
@@ -318,7 +313,7 @@ open (OUT, ">$stub\_entropy.txt")||die "can't open $stub\_entropy.txt\n";
 # Sample\tChr\tPosition\tRefBase\tCoverage\tAvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tNonRefCnt
 # CntTv\tCntTs\tOrderATCG
 
-print OUT "Sample\tChr\tPosition\tRefBase\tCoverage\tAvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tNonRefCnt\tCntTv\tCntTs\tOrderOfNucs\tadjApval\tadjCpval\tadjTpval\tadjGpval\n";
+print OUT "Sample\tChr\tPosition\tRefBase\tCoverage\tAvQual\tAcnt\tApval\tCcnt\tCpval\tTcnt\tTpval\tGcnt\tGpval\tentropy(base e)\tNonRefCnt\tCntTv\tCntTs\tOrderOfNucs\n";
 #foreach my $gene (keys %{$basefreq{$bam}}){
 foreach my $gene (keys %refseq){
   my $nbsites=0;
@@ -327,73 +322,28 @@ foreach my $gene (keys %refseq){
   #foreach my $site (sort {$a<=>$b} keys %{$basefreq{$bam}{$gene}}){
   foreach my $site (sort {$a<=>$b} keys %{$refseq{$gene}}){
     if (keys %{$basefreq{$bam}{$gene}{$site}}){# if there is information in the bam file about this site
-		my ($cntA,$cntC,$cntT,$cntG);
-		if ($basefreq{$bam}{$gene}{$site}{"A"}){ $cntA = $basefreq{$bam}{$gene}{$site}{"A"}}else{$cntA=0}
-		if ($basefreq{$bam}{$gene}{$site}{"C"}){ $cntC = $basefreq{$bam}{$gene}{$site}{"C"}}else{$cntC=0}
-		if ($basefreq{$bam}{$gene}{$site}{"T"}){ $cntT = $basefreq{$bam}{$gene}{$site}{"T"}}else{$cntT=0}
-		if ($basefreq{$bam}{$gene}{$site}{"G"}){ $cntG = $basefreq{$bam}{$gene}{$site}{"G"}}else{$cntG=0}
+    my ($cntA,$cntC,$cntT,$cntG);
+	if ($basefreq{$bam}{$gene}{$site}{"A"}){ $cntA = $basefreq{$bam}{$gene}{$site}{"A"}}else{$cntA=0}
+	if ($basefreq{$bam}{$gene}{$site}{"C"}){ $cntC = $basefreq{$bam}{$gene}{$site}{"C"}}else{$cntC=0}
+	if ($basefreq{$bam}{$gene}{$site}{"T"}){ $cntT = $basefreq{$bam}{$gene}{$site}{"T"}}else{$cntT=0}
+	if ($basefreq{$bam}{$gene}{$site}{"G"}){ $cntG = $basefreq{$bam}{$gene}{$site}{"G"}}else{$cntG=0}
 	
-		my $coverage = $cntA + $cntT + $cntC + $cntG;
-		my $average_p=$cumulqual{$bam}{$gene}{$site}/$coverage;
-		my $p = $average_p/3;
-		my (%prob,%baseprob);
-		$prob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $coverage, $p));# need to double check with Richard about the -1
-		$prob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $coverage, $p));
-		$prob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $coverage, $p));
-		$prob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $coverage, $p));
-	    
-	    # this section is for calculating the base specific p-value
-	    if ($cntA>0){
-	      my $pA=$cumulbasequal{$bam}{$gene}{$site}{"A"}/$cntA;
-	      $baseprob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $coverage, $pA));
-	    }else{
-	      $baseprob{"A"}=1;
-	    }
-	    if ($cntC>0){
-	      my $pC=$cumulbasequal{$bam}{$gene}{$site}{"C"}/$cntC;
-	      $baseprob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $coverage, $pC));
-	    }else{
-	      $baseprob{"C"}=1;
-	    }
-	    if ($cntT>0){
-	      my $pT=$cumulbasequal{$bam}{$gene}{$site}{"T"}/$cntT;
-	      $baseprob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $coverage, $pT));
-	    }else{
-	      $baseprob{"T"}=1;
-	    }
-	    if ($cntG>0){
-	      my $pG=$cumulbasequal{$bam}{$gene}{$site}{"G"}/$cntG;
-		  $baseprob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $coverage, $pG));
-		}else{
-		  $baseprob{"G"}=1;
+	my $coverage = $cntA + $cntT + $cntC + $cntG;
+	my $average_p=$cumulqual{$bam}{$gene}{$site}/$coverage;
+	my $p = $average_p/3;
+	my %prob;
+    $prob{"A"} = 1 - (&Math::CDF::pbinom(($cntA-1), $coverage, $p));# need to double check with Richard about the -1
+    $prob{"C"} = 1 - (&Math::CDF::pbinom(($cntC-1), $coverage, $p));
+    $prob{"T"} = 1 - (&Math::CDF::pbinom(($cntT-1), $coverage, $p));
+    $prob{"G"} = 1 - (&Math::CDF::pbinom(($cntG-1), $coverage, $p));
+ 	
+	if ($coverage>0){
+	  foreach my $nuc (keys %{$basefreq{$bam}{$gene}{$site}}){
+		my $nucnt=$basefreq{$bam}{$gene}{$site}{$nuc};
+		my $p = $nucnt / $coverage;
+		if($nucnt > 0){
+		  $shannon{$bam}{$gene}{$site} += -$p*log($p);#natural log, i.e. log base e
 		}
-
-	    
-		if ($coverage>0){
-		  foreach my $nuc (keys %{$basefreq{$bam}{$gene}{$site}}){
-			my $nucnt=$basefreq{$bam}{$gene}{$site}{$nuc};
-			my $p = $nucnt / $coverage;
-			if($nucnt > 0){
-			  $shannon{$bam}{$gene}{$site} += -$p*log($p);#natural log, i.e. log base e
-			}
-		  }   
-		}   
-		$nbsites++;
-		$sumentropy=$sumentropy+$shannon{$bam}{$gene}{$site};
-		my $refbase=$refbase{$bam}{$gene}{$site};
-		my $nonrefcnt=$coverage-($basefreq{$bam}{$gene}{$site}{$refbase});
-		my ($Ts,$Tv) = cntTsTv($refbase,$cntA,$cntT,$cntG,$cntC);
-		my $NucOrder="";
-		foreach my $nuc (sort { $basefreq{$bam}{$gene}{$site}{$b} <=> $basefreq{$bam}{$gene}{$site}{$a} } keys %{$basefreq{$bam}{$gene}{$site}}) {
-			$NucOrder=$NucOrder.$nuc;
-		}
-		#print "$site $refbase $NucOrder\n";	 
-		print OUT "$bam\t$gene\t$site\t$refbase\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
-		print OUT "$shannon{$bam}{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\t".$baseprob{"A"}."\t".$baseprob{"C"}."\t".$baseprob{"T"}."\t".$baseprob{"G"}."\n";
-	}else{#there is no coverage for that site in the bam
-		print OUT "$bam\t$gene\t$site\t$refseq{$gene}{$site}\t0\t\t\t\t\t\t\t\t\t\t";
-		print OUT "\t\t\t\t\n";
-
 	  }   
 	}   
 	$nbsites++;
@@ -411,7 +361,6 @@ foreach my $gene (keys %refseq){
 	}else{#there is no coverage for that site in the bam
 	print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\t\t\t\t\t\t\t\t\t\t";
 	print OUT "\t\t\t\t\n";
-
 	}
   }
   print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
