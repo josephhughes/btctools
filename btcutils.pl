@@ -44,26 +44,32 @@ if (($help)&&!($help)||!($bam)||!($ref)){
 open(MOTIF,">$stub\_motif.fa")||die "Can't open output $stub\_motif.fa\n";
 open(LOG,">$stub\_log.txt")||die "Can't open output $stub\_log.txt\n";
 
+# high level API
+my $sam = Bio::DB::Sam->new(-bam  => $bam,
+							 -fasta=> $ref);
+my @targets    = $sam->seq_ids;
+my %targetHash = map { $_ => 1 } @targets;
+my $ins_cnt=0;
+my $nocigs_cnt=0;
+my $Ncnt=0;
 # get a hash of the reference sequences with gene, site, refbase
 my %refseq;
 my $seq_in  = Bio::SeqIO->new(-format => 'fasta',-file   => $ref);
 while( my $seq = $seq_in->next_seq() ) {
   my $id=$seq->display_id();
+  if ($targetHash{$id}){
   my $seq_str=$seq->seq();
   my @refbases=split(//,$seq_str);
   for (my $i=0; $i<scalar(@refbases); $i++){
     my $site=1+$i;
     $refseq{$id}{$site}=$refbases[$i];
   }
+  }else{
+    print "$id is not in the bam file\n";
+  }
 }
 
-# high level API
-my $sam = Bio::DB::Sam->new(-bam  => $bam,
-							 -fasta=> $ref);
-my @targets    = $sam->seq_ids;
-my $ins_cnt=0;
-my $nocigs_cnt=0;
-my $Ncnt=0;
+
 my %codreg;
 if ($orfs){
     open (CODING,"<$orfs")||die "Can't open $orfs\n";
@@ -137,12 +143,15 @@ if ($orfs){
     foreach my $target (@targets){
       if (!keys %{$codreg{$target}}){
         my @orfIDs=keys %codreg;
-	    die "Error: The reference identifer $target in the bam file does not match the reference identifier in your $orfs:\n @orfIDs\n";
+        die "Error: The reference identifer $target in the bam file does not match the reference identifier in your $orfs:\n @orfIDs\n";
       }
     }
 }
 my $increment;
 foreach my $target (@targets){
+if (!$refseq{$target}){# check that reference is present in the reference file
+  print "$target does not exist in the reference input file\n";
+}else{
   print "\n$target\n";
   $increment=0;
   my @alignments = $sam->get_features_by_location(-seq_id => $target);
@@ -151,11 +160,11 @@ foreach my $target (@targets){
   my $total = scalar(@alignments);
   my $progress=0;
   for my $a (@alignments) {
-	# where does the alignment start in the reference sequence
-	$progress++;
-	progress_bar( $progress, $total, 25, '=' );
-	my $seqid  = $a->seq_id;
-	my $name   = $a->display_name;
+    # where does the alignment start in the reference sequence
+    $progress++;
+    progress_bar( $progress, $total, 25, '=' );
+    my $seqid  = $a->seq_id;
+    my $name   = $a->display_name;
 	my $start  = $a->start; #position in the reference
 	my $end    = $a->end;
 	my $strand = $a->strand;
@@ -188,6 +197,7 @@ foreach my $target (@targets){
 		my $site=$i+$start;
 		my $readpos=$i+1;
 		$basefreq{$bam}{$target}{$site}{$bases[$i]}++;
+		#print "$bam\t$target\t$site\t$bases[$i]\t$basefreq{$bam}{$target}{$site}{$bases[$i]}\n"; 
 		$refbase{$bam}{$target}{$site}=$refbases[$i];
 		my $P = 10**(-$scores[$i]/10);
 		if ($cumulqual{$bam}{$target}{$site}){
@@ -297,6 +307,7 @@ foreach my $target (@targets){
 	
  }
 }
+}
 print LOG "$bam:\nNumber of reads with inserts: $ins_cnt\nNumber of reads with Ns: $Ncnt\nNumber of sequence used: $nocigs_cnt\n";
 # print out the number of reads with 1 , 2, 3, 4, etc.. mismatches
 print LOG "Frequency of mismatches per read (mismatches: number of reads)\n";
@@ -321,6 +332,7 @@ foreach my $gene (keys %refseq){
   my $rawsumentropy=0;
   #foreach my $site (sort {$a<=>$b} keys %{$basefreq{$bam}{$gene}}){
   foreach my $site (sort {$a<=>$b} keys %{$refseq{$gene}}){
+    #print "$site\n";
     if (keys %{$basefreq{$bam}{$gene}{$site}}){# if there is information in the bam file about this site
     my ($cntA,$cntC,$cntT,$cntG);
 	if ($basefreq{$bam}{$gene}{$site}{"A"}){ $cntA = $basefreq{$bam}{$gene}{$site}{"A"}}else{$cntA=0}
@@ -376,7 +388,11 @@ foreach my $readpos (sort {$a<=>$b} keys %readinfo){
   print READ "$total\t$freq\t";
   print READ $readinfo{$readpos}{"AvQual"}/$total."\t";
   print READ $readinfo{$readpos}{"AvQualRef"}/$readinfo{$readpos}{"CntRef"}."\t";
+  if ($readinfo{$readpos}{"CntNonRef"}){
   print READ $readinfo{$readpos}{"AvQualNonRef"}/$readinfo{$readpos}{"CntNonRef"}."\n";
+  }else{
+  print READ "NA\n"
+  }
 }
 # loop for the aa mutations and position of mismatches in the codon
 if ($orfs){
