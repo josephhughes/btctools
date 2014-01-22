@@ -33,6 +33,8 @@
       <section id="main_content" class="inner">
         <p>Here I will try to explain how you can run the various btctools from the command-line. The core of btctools is written in perl and makes use of the the <a href="http://search.cpan.org/~lds/Bio-SamTools/">Bio-SamTools module</a> written by Lincoln D. Stein. 
         So the various perl script can be run from the command-line to automate the processing on multiple bam files.</p>
+        
+        <p>There are two basic processing scripts: <a href="#btcutils">btcutils</a> which is used for processing a BAM file and <a href="#btcmerge">btcmerge</a> which is used for combining multiple btc outputs.
      
 <h2>
 <a name="btcutils" class="anchor" href="#btcutils"><span class="octicon octicon-link"></span></a>btcutils</h2>
@@ -145,8 +147,15 @@ PA-X_B	598	784	PA_Influenza
 </ul>
 </p>
 
+<<<<<<< HEAD
 <h2>
 <a name="btcmerge" class="anchor" href="#btcmerge"><span class="octicon octicon-link"></span></a>btcmerge</h2>
+=======
+
+
+<h3>
+<a name="btcmerge" class="anchor" href="#btcmerge"><span class="octicon octicon-link"></span></a>btcmerge</h3>
+>>>>>>> 89a80b2b410d3060c8701e119c4ccb96c8736c7f
 
 <p>Once you have produced multiple btc files, you may want to merge several, either to compare the results from independent replicates, or to compare the intra-host diversity from different individuals, or even to compare closely related viruses in the same or different individuals.</p>
 
