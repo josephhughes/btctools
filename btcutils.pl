@@ -371,8 +371,8 @@ foreach my $gene (keys %refseq){
 	print OUT "$bam\t$gene\t$site\t".uc($refbase)."\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
 	print OUT "$shannon{$bam}{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\n";
 	}else{#there is no coverage for that site in the bam
-	print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\t\t\t\t\t\t\t\t\t\t";
-	print OUT "\t\t\t\t\n";
+	print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\t";
+	print OUT "NA\tNA\tNA\tNA\tNA\n";
 	}
   }
   print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
