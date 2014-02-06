@@ -27,15 +27,17 @@ my (@seqids,%sequences,%length);
 
 my @files=split(/,/,$files);#list of files to merge
 my (%chr);
+my $AAfilecnt=0;
 if(!$refalign){
   my (%nuctable,@colnames,%aatable,@aacolnames);
   if (scalar(@files)>2){
     open(OUT,">$out\_multi.txt")||die "Can't open $out\_multi.txt\n";
-    open(AAOUT,">$out\_AA_multi.txt")||die "Can't open $out\_AA_multi.txt\n";
-    #print "Will NOT be conducting the randomisation or nucletoide frequency test\n";
     print OUT "Chr\tSite\t";
-    print AAOUT "Protein\tAAPosition\t";
     foreach my $file (@files){
+      my $AAfilename = "$file\_AA.txt";
+      if (-e $AAfilename){
+        $AAfilecnt++;
+      }
       open (FILE,"<$file\_entropy.txt")|| die "Can't open $file\_entropy.txt\n";
       my $header=<FILE>;
       chomp($header);
@@ -52,28 +54,9 @@ if(!$refalign){
       for (my $i=3; $i<scalar(@colnames);$i++){
         print OUT "$file\_$colnames[$i]\t";
       }
-      open (AAFILE,"<$file\_AA.txt")|| die "Can't open $file\_AA.txt\n";
-      my $aaheader=<AAFILE>;
-      #print "$aaheader\n";
-      chomp($aaheader);
-      @aacolnames=split(/\t/,$aaheader);
-      while(<AAFILE>){
-        chomp($_);
-        my @values=split(/\t/,$_);
-        for (my $j=4; $j<scalar(@values);$j++){
-          #print "$values[1] $file $values[2]\n";
-          $aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]}=$values[$j];
-          #print "$aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]} $values[2] $values[3] $file $aacolnames[$j]\n";
-        }
-      }
-      for (my $j=4; $j<scalar(@aacolnames);$j++){
-        print AAOUT "$file\_$aacolnames[$j]\t";
-      }
       close(FILE);
-      close(AAFILE);
     }
     print OUT "\n";
-    print AAOUT "\n";    
     foreach my $gene (keys %nuctable){
       foreach my $site (sort {$a<=>$b} keys %{$nuctable{$gene}}){
         print OUT "$gene\t$site\t";
@@ -86,19 +69,46 @@ if(!$refalign){
       }
     }
     close(OUT);
-    foreach my $prot (keys %aatable){
-      foreach my $site (sort {$a<=>$b} keys %{$aatable{$prot}}){
-        print AAOUT "$prot\t$site\t";
-        foreach my $sample (@files){
-          for (my $i=4; $i<scalar(@aacolnames);$i++){
-            print AAOUT "$aatable{$prot}{$site}{$sample}{$aacolnames[$i]}\t";
-          }
-        } 
-        print AAOUT "\n";   
-      }
-    }
-    close(AAOUT);
-
+    if ($AAfilecnt == scalar(@files)){
+		open(AAOUT,">$out\_AA_multi.txt")||die "Can't open $out\_AA_multi.txt\n";
+		print AAOUT "Protein\tAAPosition\t";
+		foreach my $file (@files){
+		  open (AAFILE,"<$file\_AA.txt")|| die "Can't open $file\_AA.txt\n";
+		  my $aaheader=<AAFILE>;
+		  #print "$aaheader\n";
+		  chomp($aaheader);
+		  @aacolnames=split(/\t/,$aaheader);
+		  while(<AAFILE>){
+			chomp($_);
+			my @values=split(/\t/,$_);
+			for (my $j=4; $j<scalar(@values);$j++){
+			  #print "$values[1] $file $values[2]\n";
+			  $aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]}=$values[$j];
+			  #print "$aatable{$values[2]}{$values[3]}{$file}{$aacolnames[$j]} $values[2] $values[3] $file $aacolnames[$j]\n";
+			}
+		  }
+		  for (my $j=4; $j<scalar(@aacolnames);$j++){
+			print AAOUT "$file\_$aacolnames[$j]\t";
+		  }
+		  close(AAFILE);
+		}
+		print AAOUT "\n";    
+	
+		foreach my $prot (keys %aatable){
+		  foreach my $site (sort {$a<=>$b} keys %{$aatable{$prot}}){
+			print AAOUT "$prot\t$site\t";
+			foreach my $sample (@files){
+			  for (my $i=4; $i<scalar(@aacolnames);$i++){
+				print AAOUT "$aatable{$prot}{$site}{$sample}{$aacolnames[$i]}\t";
+			  }
+			} 
+			print AAOUT "\n";   
+		  }
+		}
+		close(AAOUT);
+     }else{
+       print "Missing AA files\n";
+     }
   }elsif (scalar(@files)==2){
     open(OUT,">$out\_rep.txt")||die "Can't open $out\_rep.txt\n";
     open(AAOUT,">$out\_AA_rep.txt")||die "Can't open $out\_AA_rep.txt\n";
