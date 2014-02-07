@@ -9,6 +9,8 @@
 # CntTv\tCntTs\tCodonPos\tCntNonSyn\tCntSyn\tOrderATCG
 # example command: ./btcutils -bam SamTestFiles/S1_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -stub out
 # perl btcutils.pl -bam SamTestFiles/S1_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -stub out
+# ./btcutils -bam SamTestFiles/S2_refHPAI_cons_stampy.bam -ref SamTestFiles/refHPAI_cons.fa -orf SamTestFiles/S1.Coding.regions.txt 
+
 use strict;
 use Getopt::Long; 
 use Bio::DB::Sam;
@@ -371,8 +373,9 @@ foreach my $gene (keys %refseq){
 	print OUT "$bam\t$gene\t$site\t".uc($refbase)."\t$coverage\t$average_p\t$cntA\t".$prob{"A"}."\t$cntC\t".$prob{"C"}."\t$cntT\t".$prob{"T"}."\t$cntG\t".$prob{"G"}."\t";
 	print OUT "$shannon{$bam}{$gene}{$site}\t$nonrefcnt\t$Ts\t$Tv\t$NucOrder\n";
 	}else{#there is no coverage for that site in the bam
-	print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\t";
-	print OUT "NA\tNA\tNA\tNA\tNA\n";
+	#print "No coverage $site\n";
+	print OUT "$bam\t$gene\t$site\t".uc($refseq{$gene}{$site})."\t0\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t<NA>\t";
+	print OUT "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\n";
 	}
   }
   print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
