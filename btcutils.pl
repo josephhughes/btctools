@@ -18,7 +18,7 @@ use Math::CDF;
 use Bio::SeqIO;
 
 # global variables
-my ($bam, $ref,$help, $out,%basefreq,%refbase,$i,%cumulqual,$orfs,%readinfo,%IUPAC,%c2p,%aafreq,%aaorder,%readmis);
+my ($c, $bam, $ref,$help, $out,%basefreq,%refbase,$i,%cumulqual,$orfs,%readinfo,%IUPAC,%c2p,%aafreq,%aaorder,%readmis);
 # addition of avqual threshold, coverage threshold, pval threshold => need to re-think this
 # %readmis used to count the number of mismatches per reads
 # my $tpval=0;
@@ -31,6 +31,7 @@ my $stub="output";
 	    'ref:s'  => \$ref, #reference file in fasta  
 	    'orfs:s' => \$orfs, #start stop position for each gene labelled the same way as the ref file, keep in mind that a gene may code for multiple proteins
         "stub:s" => \$stub,
+        "c"  =>  \$c, #use if you want information on insertions and deletions
            );
 
 if (($help)&&!($help)||!($bam)||!($ref)){
@@ -181,8 +182,13 @@ if (!$refseq{$target}){# check that reference is present in the reference file
 	my $match_qual= $a->qual;       # quality of the match
     my $mismatches=0;
 	#print "Ref $start Cigar $cigar $ref_dna $query_dna\n";
-	if ($cigar=~/I|D|N|S|H|P|X/){
+	if ($c){
 	  $ins_cnt++;
+	  print "$cigar\n";
+	  
+	  
+	  
+	  
 	}
 	if ($cigar!~/I|D|N|S|H|P|X/){#|= if there is an = it means exact match so want to parse
 	  #print "$cigar\n";
@@ -378,7 +384,12 @@ foreach my $gene (keys %refseq){
 	print OUT "<NA>\t<NA>\t<NA>\t<NA>\t<NA>\n";
 	}
   }
-  print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
+  if ($nbsites>0){
+    print LOG "Gene $gene Average entropy = ".$sumentropy/$nbsites."\n";
+  }else{
+    print LOG "Gene $gene Average entropy = Not Available\n";
+  }
+
 }
 # Read mismatch table:
 # ReadPos\tCntNonRef\tCntRef\tTotalCnt\tFreq\tAvQual (Freq=NonRef/TotalCnt)
