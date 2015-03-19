@@ -61,7 +61,7 @@ if(!$refalign){
       foreach my $site (sort {$a<=>$b} keys %{$nuctable{$gene}}){
         print OUT "$gene\t$site\t";
         foreach my $sample (@files){
-          for (my $j=4; $j<scalar(@colnames);$j++){
+          for (my $j=3; $j<scalar(@colnames);$j++){
             print OUT "$nuctable{$gene}{$site}{$sample}{$colnames[$j]}\t";
           }
         } 
